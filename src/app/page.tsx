@@ -7,7 +7,7 @@ export default function Home() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
 
   return (
-    <main className="relative flex h-screen w-full overflow-hidden bg-slate-50 text-slate-900">
+    <main className="relative flex min-h-[calc(100vh-73px)] w-full overflow-hidden bg-slate-50 text-slate-900">
       {/* Wardrobe – left sliding sidebar */}
       <aside
         className={`h-full border-r transition-all duration-300 ease-in-out ${
