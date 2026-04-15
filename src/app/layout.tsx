@@ -29,7 +29,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "F.Ava AI | Virtual Wardrobe",
+  title: "F.AVA AI | Virtual Wardrobe",
   description: "A beginner-friendly fashion avatar app",
   icons: {
     icon: "/logo-icon.svg",

@@ -1,3 +1,7 @@
+export const metadata = {
+  title: "F.AVA AI | Wardrobe",
+};
+
 export default function WardrobePage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">

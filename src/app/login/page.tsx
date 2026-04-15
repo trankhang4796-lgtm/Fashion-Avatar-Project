@@ -1,3 +1,7 @@
+export const metadata = {
+  title: "F.AVA AI | LoginPage",
+};
+
 export default function LoginPage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">

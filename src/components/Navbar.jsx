@@ -1,14 +1,14 @@
 import Link from "next/link";
 
 const navLinks = [
-  { href: "/dashboard", label: "Get Started" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/avatar", label: "Avatar" },
   { href: "/wardrobe", label: "Wardrobe" },
 ];
 
 export default function Navbar() {
   return (
-    <header className="w-full bg-brand-cream border-b border-slate-200">
+    <header className="w-full bg-cream border-b border-slate-200">
       <div className="mx-auto flex w-full max-w-[1900px] items-center justify-between px-6 py-4 md:px-12">
         {/* Logo - Far Left */}
         <Link
