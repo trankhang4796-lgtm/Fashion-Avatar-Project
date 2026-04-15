@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="100%" height="100%">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;display=swap');
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 64px;
+      fill: #2D4A3E;
+    }
+    .logo-dot {
+      fill: #A8D5BA;
+    }
+  </style>
+
+  <text x="50%" y="65%" dominant-baseline="middle" text-anchor="middle" class="logo-text">
+    F<tspan class="logo-dot">.</tspan>AVA AI
+  </text>
+</svg>
