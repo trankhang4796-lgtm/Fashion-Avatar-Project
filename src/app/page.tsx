@@ -52,7 +52,7 @@ export default function LandingPage() {
           href="/dashboard"
           className="mt-8 inline-block rounded-full bg-brand-mint px-8 py-4 font-semibold text-white transition-all hover:bg-brand-forest opacity-100"
         >
-          Get started for free -&gt;
+          Get started for free 🠮
         </Link>
         <p className="mt-3 text-sm text-slate-500">No credit card required.</p>
       </div>
