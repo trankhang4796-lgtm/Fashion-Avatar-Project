@@ -162,6 +162,20 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
     setUploadedImageUrls((prev) => prev.filter((item) => item.id !== idToRemove));
   };
 
+  const handleAddPendingToWardrobe = () => {
+    if (!pendingImage) return;
+
+    const newItem: ClothingItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      url: pendingImage.url,
+      type: pendingImage.type,
+      isOwned: pendingImage.isOwned,
+    };
+
+    setUploadedImageUrls((prev) => [newItem, ...prev]);
+    setPendingImage(null);
+  };
+
   const filteredItems = uploadedImageUrls.filter((item) =>
     activeTab === "owned" ? item.isOwned : !item.isOwned,
   );
@@ -210,41 +224,44 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
       )}
 
       {pendingImage && (
-        <div className="mb-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-          <p className="mb-3 text-sm font-medium text-slate-700">Preview</p>
-          <div className="mb-3 aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-            <img src={pendingImage.url} alt="Pending wardrobe item" className="h-full w-full object-contain" />
-          </div>
-          <div className="space-y-3">
-            <ClothingType
-              value={pendingImage.type}
-              onChange={(value) =>
-                setPendingImage((prev) => (prev ? { ...prev, type: value } : prev))
-              }
-            />
-            <OwnershipToggle
-              value={pendingImage.isOwned}
-              onChange={(value) =>
-                setPendingImage((prev) => (prev ? { ...prev, isOwned: value } : prev))
-              }
-            />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleAddToWardrobe}
-                className="flex-1 rounded-lg bg-brand-forest px-3 py-2 text-sm font-medium text-white"
-              >
-                Add to Wardrobe
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelPreview}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600"
-              >
-                Cancel
-              </button>
+        <div className="mb-4 rounded-lg border border-slate-200 bg-white p-3">
+          <h3 className="mb-2 text-sm font-semibold text-slate-800">
+            Preview & metadata
+          </h3>
+          <div className="mb-3 flex gap-3">
+            <div className="h-20 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+              <img
+                src={pendingImage.url}
+                alt="Pending wardrobe item"
+                className="h-full w-full object-contain"
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-2">
+              <ClothingType
+                value={pendingImage.type}
+                onChange={(type) =>
+                  setPendingImage((prev) =>
+                    prev ? { ...prev, type } : prev
+                  )
+                }
+              />
+              <OwnershipToggle
+                value={pendingImage.isOwned}
+                onChange={(isOwned) =>
+                  setPendingImage((prev) =>
+                    prev ? { ...prev, isOwned } : prev
+                  )
+                }
+              />
             </div>
           </div>
+          <button
+            type="button"
+            onClick={handleAddPendingToWardrobe}
+            className="w-full rounded-lg bg-brand-forest px-3 py-2 text-sm font-semibold text-white hover:bg-brand-forest/90"
+          >
+            Add to Wardrobe
+          </button>
         </div>
       )}
 
