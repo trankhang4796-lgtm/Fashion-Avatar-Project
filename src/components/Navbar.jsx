@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AccountMenu from "@/src/account/AccountMenu";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -44,12 +45,7 @@ export default function Navbar() {
         </nav>
 
         {/* Login Button - Far Right */}
-        <Link
-          href="/login"
-          className="font-jakarta rounded-lg bg-brand-mint px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-forest"
-        >
-          Login / Sign Up
-        </Link>
+        <AccountMenu />
       </div>
     </header>
   );

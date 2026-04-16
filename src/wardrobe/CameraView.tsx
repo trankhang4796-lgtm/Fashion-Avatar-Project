@@ -3,8 +3,8 @@
 import { RefObject } from "react";
 
 interface CameraViewProps {
-  videoRef: RefObject<HTMLVideoElement>;
-  canvasRef: RefObject<HTMLCanvasElement>;
+  videoRef: RefObject<HTMLVideoElement | null>;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
   onCapture: () => void;
   onCancel: () => void;
 }

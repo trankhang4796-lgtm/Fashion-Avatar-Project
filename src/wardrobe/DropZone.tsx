@@ -5,7 +5,7 @@ import { ChangeEvent, DragEvent, RefObject } from "react";
 interface DropZoneProps {
   isDragging: boolean;
   isCameraOpen: boolean;
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   onDragOver: (e: DragEvent<HTMLDivElement>) => void;
   onDragLeave: (e: DragEvent<HTMLDivElement>) => void;
   onDrop: (e: DragEvent<HTMLDivElement>) => void;

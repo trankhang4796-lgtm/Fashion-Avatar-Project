@@ -54,7 +54,7 @@ export default function LandingPage() {
         >
           Get started for free
         </Link>
-        <p className="mt-3 text-sm text-slate-500">No credit card required.</p>
+        <p className="mt-3 text-sm text-slate-500">No credit card or login required.</p>
       </div>
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 // Import our separated components
 import ErrorBoundary from "./ErrorBoundary";
 import DropZone from "./DropZone";
@@ -8,6 +8,7 @@ import CameraView from "./CameraView";
 import ImageGrid from "./ImageGrid";
 import ClothingType from "./ClothingType";
 import OwnershipToggle from "./OwnershipToggle";
+import { createClient } from "@/src/utils/supabase/client";
 
 interface WardrobeSidebarProps {
   isOpen: boolean;
@@ -25,9 +26,12 @@ interface PendingImage {
   url: string;
   type: "upper" | "lower";
   isOwned: boolean;
+  file?: File | Blob;
 }
 
 export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarProps) {
+  const supabase = useMemo(() => createClient(), []);
+
   // State management
   const [isDragging, setIsDragging] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -35,6 +39,8 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
   const [uploadedImageUrls, setUploadedImageUrls] = useState<ClothingItem[]>([]);
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
   const [activeTab, setActiveTab] = useState<"owned" | "unowned">("owned");
+  const [user, setUser] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +64,59 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
     }
   }, [isCameraOpen, mediaStream]);
 
+  const fetchWardrobeItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("wardrobe_items")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching wardrobe items", error);
+        return;
+      }
+
+      const mapped: ClothingItem[] =
+        (data ?? []).map((row: any) => ({
+          id: String(row.id),
+          url: String(row.image_url),
+          type: row.clothing_type === "lower" ? "lower" : "upper",
+          isOwned: Boolean(row.is_owned),
+        })) ?? [];
+
+      setUploadedImageUrls(mapped);
+    } catch (err) {
+      console.error("Error fetching wardrobe items", err);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) console.error("Error getting session", error);
+
+        const nextUser = data.session?.user ?? null;
+        if (!isMounted) return;
+
+        setUser(nextUser);
+        if (nextUser) {
+          await fetchWardrobeItems();
+        }
+      } catch (err) {
+        console.error("Error checking auth session", err);
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
+
   const setPendingPreview = (nextPendingImage: PendingImage) => {
     if (pendingImage?.url.startsWith("blob:")) {
       URL.revokeObjectURL(pendingImage.url);
@@ -70,9 +129,10 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
   // Processes raw files into URLs
   const addFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const nextUrl = Array.from(files)
-      .filter((file) => file.type.startsWith("image/"))
-      .map((file) => URL.createObjectURL(file))[0];
+    const nextFile = Array.from(files).find((file) => file.type.startsWith("image/"));
+    if (!nextFile) return;
+
+    const nextUrl = URL.createObjectURL(nextFile);
 
     if (!nextUrl) return;
 
@@ -81,6 +141,7 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
       url: nextUrl,
       type: "upper",
       isOwned: true,
+      file: nextFile,
     });
   };
 
@@ -117,29 +178,23 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext("2d")?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-    
-    setPendingPreview({
-      url: canvas.toDataURL("image/jpeg", 0.92),
-      type: "upper",
-      isOwned: true,
-    });
-    stopCamera();
-  };
 
-  const handleAddToWardrobe = () => {
-    if (!pendingImage) return;
-
-    setUploadedImageUrls((prev) => [
-      {
-        id: crypto.randomUUID(),
-        url: pendingImage.url,
-        type: pendingImage.type,
-        isOwned: pendingImage.isOwned,
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const blobUrl = URL.createObjectURL(blob);
+        createdUrlsRef.current.push(blobUrl);
+        setPendingPreview({
+          url: blobUrl,
+          type: "upper",
+          isOwned: true,
+          file: blob,
+        });
+        stopCamera();
       },
-      ...prev,
-    ]);
-    setActiveTab(pendingImage.isOwned ? "owned" : "unowned");
-    setPendingImage(null);
+      "image/jpeg",
+      0.92
+    );
   };
 
   const handleCancelPreview = () => {
@@ -151,29 +206,140 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
   };
 
   // Remove Image Handler
-  const handleRemoveItem = (idToRemove: string) => {
+  const handleRemoveItem = async (idToRemove: string) => {
     const itemToRemove = uploadedImageUrls.find((item) => item.id === idToRemove);
     if (!itemToRemove) return;
 
+    // 1. Optimistically remove from UI for instant user feedback
+    setUploadedImageUrls((prev) => prev.filter((item) => item.id !== idToRemove));
+
+    // 2. Handle local Blob URLs (Guest Mode)
     if (itemToRemove.url.startsWith("blob:")) {
       URL.revokeObjectURL(itemToRemove.url);
       createdUrlsRef.current = createdUrlsRef.current.filter((url) => url !== itemToRemove.url);
+      return;
     }
-    setUploadedImageUrls((prev) => prev.filter((item) => item.id !== idToRemove));
+
+    // 3. Handle Supabase Cloud Deletion (Logged in users)
+    if (user && itemToRemove.url.includes("supabase.co")) {
+      try {
+        // Extract the exact filename from the end of the public URL
+        const urlParts = itemToRemove.url.split("/wardrobe-images/");
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1];
+
+          // A. Delete from Storage Bucket
+          const { error: storageError } = await supabase
+            .storage
+            .from("wardrobe-images")
+            .remove([filePath]);
+
+          if (storageError) {
+            console.error("Error deleting image from bucket:", storageError);
+          }
+        }
+
+        // B. Delete from Database Table
+        const { error: dbError } = await supabase
+          .from("wardrobe_items")
+          .delete()
+          .eq("id", itemToRemove.id);
+
+        if (dbError) {
+          console.error("Error deleting from database:", dbError);
+        }
+      } catch (error) {
+        console.error("Failed to delete item from cloud:", error);
+      }
+    }
   };
 
-  const handleAddPendingToWardrobe = () => {
-    if (!pendingImage) return;
+  const handleAddPendingToWardrobe = async () => {
+    if (!pendingImage || isUploading) return;
 
-    const newItem: ClothingItem = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      url: pendingImage.url,
-      type: pendingImage.type,
-      isOwned: pendingImage.isOwned,
-    };
+    if (!user) {
+      const newItem: ClothingItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        url: pendingImage.url,
+        type: pendingImage.type,
+        isOwned: pendingImage.isOwned,
+      };
 
-    setUploadedImageUrls((prev) => [newItem, ...prev]);
-    setPendingImage(null);
+      setUploadedImageUrls((prev) => [newItem, ...prev]);
+      setActiveTab(pendingImage.isOwned ? "owned" : "unowned");
+      setPendingImage(null);
+      return;
+    }
+
+    if (!pendingImage.file) {
+      console.error("Missing raw file/blob for upload");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const filename = `${user.id}-${Date.now()}.jpeg`;
+
+      const { error: uploadError } = await supabase
+        .storage
+        .from("wardrobe-images")
+        .upload(filename, pendingImage.file, {
+          contentType: "image/jpeg",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error("Error uploading image", uploadError);
+        return;
+      }
+
+      const { data: publicData } = supabase
+        .storage
+        .from("wardrobe-images")
+        .getPublicUrl(filename);
+
+      const publicUrl = publicData?.publicUrl;
+      if (!publicUrl) {
+        console.error("Unable to get public URL for uploaded image");
+        return;
+      }
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("wardrobe_items")
+        .insert({
+          user_id: user.id,
+          image_url: publicUrl,
+          clothing_type: pendingImage.type,
+          is_owned: pendingImage.isOwned,
+        })
+        .select("*")
+        .single();
+
+      if (insertError) {
+        console.error("Error inserting wardrobe item row", insertError);
+        return;
+      }
+
+      const newItem: ClothingItem = {
+        id: inserted?.id ? String(inserted.id) : crypto.randomUUID(),
+        url: publicUrl,
+        type: pendingImage.type,
+        isOwned: pendingImage.isOwned,
+      };
+
+      setUploadedImageUrls((prev) => [newItem, ...prev]);
+      setActiveTab(pendingImage.isOwned ? "owned" : "unowned");
+
+      if (pendingImage.url.startsWith("blob:")) {
+        URL.revokeObjectURL(pendingImage.url);
+        createdUrlsRef.current = createdUrlsRef.current.filter((url) => url !== pendingImage.url);
+      }
+      setPendingImage(null);
+    } catch (err) {
+      console.error("Error adding wardrobe item", err);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const filteredItems = uploadedImageUrls.filter((item) =>
@@ -258,9 +424,10 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
           <button
             type="button"
             onClick={handleAddPendingToWardrobe}
-            className="w-full rounded-lg bg-brand-forest px-3 py-2 text-sm font-semibold text-white hover:bg-brand-forest/90"
+            disabled={isUploading}
+            className="w-full rounded-lg bg-brand-forest px-3 py-2 text-sm font-semibold text-white hover:bg-brand-forest/90 disabled:opacity-60"
           >
-            Add to Wardrobe
+            {isUploading ? "Adding..." : "Add to Wardrobe"}
           </button>
         </div>
       )}
