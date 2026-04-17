@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import { WardrobeItem } from "./types";
+
 interface ImageGridProps {
-  images: Array<{ id: string; url: string }>;
+  images: WardrobeItem[];
   onRemove: (id: string) => void;
 }
 
@@ -23,11 +26,18 @@ export default function ImageGrid({ images, onRemove }: ImageGridProps) {
             ×
           </button>
           {/* The uploaded image */}
-          <img
+          <Image
             src={image.url}
             alt={`Uploaded clothing item ${index + 1}`}
-            className="h-full w-full object-contain"
+            fill
+            unoptimized
+            sizes="(max-width: 768px) 50vw, 33vw"
+            className="object-contain"
           />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-2 text-[11px] text-white">
+            {image.type === "upper" ? "Upper-wear" : "Lower-wear"} ·{" "}
+            {image.isOwned ? "Owned" : "Wishlist"}
+          </div>
         </div>
       ))}
     </div>

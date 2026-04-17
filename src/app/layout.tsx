@@ -7,6 +7,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/Navbar";
+import { WardrobeProvider } from "@/src/context/WardrobeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,8 +47,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${jakarta.variable} antialiased bg-brand-cream text-brand-forest`}
       >
-        <Navbar />
-        {children}
+        <WardrobeProvider>
+          <Navbar />
+          {children}
+        </WardrobeProvider>
       </body>
     </html>
   );
