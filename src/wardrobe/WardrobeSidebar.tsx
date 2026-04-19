@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { useEffect, useRef, useState } from "react";
 import { useWardrobe } from "@/src/context/WardrobeContext";
+import { createClient } from "@/src/utils/supabase/client";
 import ImageGrid from "./ImageGrid";
 import WardrobeUploader from "./WardrobeUploader";
+
+export type { WardrobeItem as ClothingItem } from "./types";
 
 interface WardrobeSidebarProps {
   isOpen: boolean;
@@ -12,7 +16,48 @@ interface WardrobeSidebarProps {
 
 export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarProps) {
   const [activeTab, setActiveTab] = useState<"owned" | "unowned">("owned");
-  const { items, isLoaded, removeItem } = useWardrobe();
+  const [user, setUser] = useState<User | null>(null);
+  const [, setUploadedImageUrls] = useState<string[]>([]);
+  const createdUrlsRef = useRef<string[]>([]);
+
+  const { items, isLoaded, removeItem, clearGuestWardrobe, fetchWardrobeItems } =
+    useWardrobe();
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const clearGuestState = () => {
+      createdUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      createdUrlsRef.current = [];
+      setUploadedImageUrls([]);
+      clearGuestWardrobe();
+    };
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        clearGuestState();
+        void fetchWardrobeItems();
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        setUser(session.user);
+        clearGuestState();
+        void fetchWardrobeItems();
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        clearGuestState();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [clearGuestWardrobe, fetchWardrobeItems]);
 
   const filteredItems = items.filter((item) =>
     activeTab === "owned" ? item.isOwned : !item.isOwned,
@@ -81,7 +126,11 @@ export default function WardrobeSidebar({ isOpen, onToggle }: WardrobeSidebarPro
           No {activeTab === "owned" ? "owned" : "wishlist"} items yet.
         </p>
       ) : (
-        <ImageGrid images={filteredItems} onRemove={removeItem} />
+        <ImageGrid
+          key={user?.id ?? "guest"}
+          images={filteredItems}
+          onRemove={removeItem}
+        />
       )}
     </div>
   );

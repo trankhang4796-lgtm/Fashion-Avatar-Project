@@ -1,43 +1,43 @@
 "use client";
 
-import Image from "next/image";
-import { WardrobeItem } from "./types";
+import type { ClothingItem } from "./WardrobeSidebar";
 
 interface ImageGridProps {
-  images: WardrobeItem[];
+  images: ClothingItem[];
   onRemove: (id: string) => void;
 }
 
 export default function ImageGrid({ images, onRemove }: ImageGridProps) {
   return (
     <div className="grid grid-cols-2 gap-3 overflow-y-auto md:grid-cols-3">
-      {images.map((image, index) => (
+      {images.map((item, index) => (
         <div
-          key={image.id}
-          className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+          key={item.id}
+          draggable={true}
+          onDragStart={(e) => {
+            e.dataTransfer.setData("application/json", JSON.stringify(item));
+          }}
+          className="group relative aspect-square cursor-grab overflow-hidden rounded-lg border border-slate-200 bg-slate-50 active:cursor-grabbing"
         >
-          {/* Delete button appears on hover */}
+          {/* Delete button (restored and safeguarded) */}
           <button
             type="button"
-            onClick={() => onRemove(image.id)}
-            className="absolute top-1 right-1 rounded-full bg-white/70 p-1 text-slate-500 opacity-0 backdrop-blur-sm transition-colors group-hover:opacity-100 hover:bg-slate-100 hover:text-red-500"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevents the drag event from swallowing the click
+              onRemove(item.id);
+            }}
+            className="absolute top-1 right-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-slate-500 opacity-0 shadow-sm backdrop-blur-sm transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
             title="Remove item"
           >
             ×
           </button>
+
           {/* The uploaded image */}
-          <Image
-            src={image.url}
+          <img
+            src={item.url}
             alt={`Uploaded clothing item ${index + 1}`}
-            fill
-            unoptimized
-            sizes="(max-width: 768px) 50vw, 33vw"
-            className="object-contain"
+            className="pointer-events-none h-full w-full object-contain p-1"
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-2 text-[11px] text-white">
-            {image.type === "upper" ? "Upper-wear" : "Lower-wear"} ·{" "}
-            {image.isOwned ? "Owned" : "Wishlist"}
-          </div>
         </div>
       ))}
     </div>
