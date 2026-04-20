@@ -5,6 +5,7 @@ const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/avatar", label: "Avatar" },
   { href: "/wardrobe", label: "Wardrobe" },
+  { href: "/community", label: "Community" },
 ];
 
 export default function Navbar() {
