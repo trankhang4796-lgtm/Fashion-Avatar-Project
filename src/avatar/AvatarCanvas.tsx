@@ -1,19 +1,34 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { DragEvent } from "react";
+import { WardrobeItem } from "@/src/wardrobe/types";
 
-export default function AvatarCanvas() {
-  const [upperWear, setUpperWear] = useState<any>(null);
-  const [lowerWear, setLowerWear] = useState<any>(null);
+interface AvatarCanvasProps {
+  upperWear: WardrobeItem | null;
+  lowerWear: WardrobeItem | null;
+  onUpperWearChange: (item: WardrobeItem | null) => void;
+  onLowerWearChange: (item: WardrobeItem | null) => void;
+}
 
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    const raw = e.dataTransfer.getData("application/json");
+export default function AvatarCanvas({
+  upperWear,
+  lowerWear,
+  onUpperWearChange,
+  onLowerWearChange,
+}: AvatarCanvasProps) {
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+
+    // Each wardrobe card sends its data as JSON when dragged.
+    const raw = event.dataTransfer.getData("application/json");
     if (!raw) return;
-    const item = JSON.parse(raw);
-    if (item.type === "upper") setUpperWear(item);
-    if (item.type === "lower") setLowerWear(item);
+
+    const item = JSON.parse(raw) as WardrobeItem;
+
+    // Drop upper items into the upper slot and lower items into the lower slot.
+    if (item.type === "upper") onUpperWearChange(item);
+    if (item.type === "lower") onLowerWearChange(item);
   }
 
   return (
@@ -35,7 +50,7 @@ export default function AvatarCanvas() {
             />
             <button
               type="button"
-              onClick={() => setUpperWear(null)}
+              onClick={() => onUpperWearChange(null)}
               className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-sm text-slate-600 opacity-0 shadow transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
               title="Remove upper wear"
             >
@@ -59,7 +74,7 @@ export default function AvatarCanvas() {
             />
             <button
               type="button"
-              onClick={() => setLowerWear(null)}
+              onClick={() => onLowerWearChange(null)}
               className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-sm text-slate-600 opacity-0 shadow transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
               title="Remove lower wear"
             >
