@@ -4,27 +4,35 @@ import { useState } from "react";
 import AvatarCanvas from "@/src/avatar/AvatarCanvas";
 import { WardrobeItem } from "@/src/wardrobe/types";
 import WardrobeSidebar from "@/src/wardrobe/WardrobeSidebar";
-import { saveOutfitToStorage } from "@/src/utils/outfits";
+import type { SavedOutfit } from "@/src/utils/outfits";
+import { saveOutfitToCloud } from "@/src/utils/outfits";
 
 export default function DashboardPage() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
   const [upperWear, setUpperWear] = useState<WardrobeItem | null>(null);
   const [lowerWear, setLowerWear] = useState<WardrobeItem | null>(null);
   const [saveMessage, setSaveMessage] = useState("");
+  const [newlySavedOutfit, setNewlySavedOutfit] = useState<SavedOutfit | null>(null);
 
-  const handleSaveOutfit = () => {
-    // Do not save a completely empty outfit.
+  const handleSaveOutfit = async () => {
     if (!upperWear && !lowerWear) {
       setSaveMessage("Add an upper or lower clothing item before saving.");
       return;
     }
 
-    const savedOutfit = saveOutfitToStorage({
-      upperWear,
-      lowerWear,
-    });
+    try {
+      setSaveMessage("Saving...");
+      const savedOutfit = await saveOutfitToCloud({
+        upperWear,
+        lowerWear,
+      });
+      setNewlySavedOutfit(savedOutfit);
 
-    setSaveMessage(`${savedOutfit.name} saved successfully.`);
+      setSaveMessage(`${savedOutfit.name} saved securely to cloud!`);
+    } catch (error: any) {
+      // This will catch the 'You must be logged in' error
+      setSaveMessage(error.message || "Failed to save outfit.");
+    }
   };
 
   return (
@@ -38,6 +46,11 @@ export default function DashboardPage() {
         <WardrobeSidebar
           isOpen={isWardrobeOpen}
           onToggle={() => setIsWardrobeOpen((prev) => !prev)}
+          onEquipOutfit={(upper, lower) => {
+            setUpperWear(upper);
+            setLowerWear(lower);
+          }}
+          newlySavedOutfit={newlySavedOutfit}
         />
       </aside>
 
