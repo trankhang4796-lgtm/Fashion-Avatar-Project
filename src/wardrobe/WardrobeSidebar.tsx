@@ -32,6 +32,7 @@ export default function WardrobeSidebar({
   const [activeTab, setActiveTab] = useState<"owned" | "unowned" | "outfits">(
     "owned",
   );
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [, setUploadedImageUrls] = useState<string[]>([]);
@@ -78,6 +79,29 @@ export default function WardrobeSidebar({
       });
     }
   }, [newlySavedOutfit]);
+
+  useEffect(() => {
+    if (!isAddModalOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsAddModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isAddModalOpen]);
+
+  useEffect(() => {
+    if (!isAddModalOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isAddModalOpen]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -128,11 +152,13 @@ export default function WardrobeSidebar({
         </button>
       </div>
 
-      <WardrobeUploader
-        className="mb-4"
-        title="Add clothing"
-        description="Anything saved here also appears on the Wardrobe page."
-      />
+      <button
+        type="button"
+        onClick={() => setIsAddModalOpen(true)}
+        className="mb-4 w-full rounded-lg bg-brand-forest px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-darkgreen"
+      >
+        Add Clothing
+      </button>
 
       <div className="mb-3 flex gap-4 border-b border-slate-200">
         <button
@@ -284,6 +310,48 @@ export default function WardrobeSidebar({
           onRemove={handleRemoveItem}
         />
       )}
+
+      {isAddModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add clothing"
+        >
+          <button
+            type="button"
+            aria-label="Close add clothing modal"
+            className="absolute inset-0 bg-slate-900/45 backdrop-blur-[1px]"
+            onClick={() => setIsAddModalOpen(false)}
+          />
+
+          <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              aria-label="Close"
+              className="absolute right-4 top-4 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            >
+              ×
+            </button>
+
+            <div className="pr-10">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Add Clothing
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Upload from files, drag and drop, or take a photo.
+              </p>
+            </div>
+
+            <WardrobeUploader
+              className="mt-4 border-0 bg-transparent p-0 shadow-none"
+              title=""
+              description=""
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
