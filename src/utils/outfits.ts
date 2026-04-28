@@ -60,6 +60,7 @@ export async function getSavedOutfits(): Promise<SavedOutfit[]> {
   const { data, error } = await supabase
     .from("saved_outfits")
     .select("*")
+    .eq("user_id", session.user.id)
     .order("created_at", { ascending: false });
 
   if (error) {
