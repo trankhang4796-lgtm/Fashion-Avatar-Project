@@ -8,6 +8,20 @@ import WardrobeUploader from "./WardrobeUploader";
 export default function WardrobePageContent() {
   const { items, isLoaded, removeItem } = useWardrobe();
 
+  const handleRemoveItem = async (id: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to permanently delete this item? This cannot be undone.",
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await removeItem(id);
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      alert("Failed to delete the item. Please try again.");
+    }
+  };
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="mb-8">
@@ -48,7 +62,7 @@ export default function WardrobePageContent() {
                 </p>
               </div>
             ) : (
-              <WardrobeGrid items={items} onRemove={removeItem} />
+              <WardrobeGrid items={items} onRemove={handleRemoveItem} />
             )}
           </section>
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { createClient } from "@/src/utils/supabase/client";
 import SignOutButton from "./SignOutButton";
 
@@ -51,37 +52,64 @@ export default function AccountMenu() {
 
     loadSession();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
       setIsOpen(false);
       setLoading(false);
 
       if (event === "SIGNED_IN" && session?.user) {
-        // Fetch username from profiles table for toast + display
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", session.user.id)
-          .single();
-
-        const name = profile?.username || "User";
-        setUsername(name);
-        setWelcomeMessage(`Welcome back, ${name}!`);
-
-        // Hide the toast after 4 seconds
+        // Defer the database query to release the Supabase auth lock and prevent deadlocks
         setTimeout(() => {
-          if (isMounted) setWelcomeMessage("");
-        }, 4000);
+          const fetchProfile = async () => {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("username")
+              .eq("id", session.user.id)
+              .single();
+
+            const name = profile?.username || "User";
+            setUsername(name);
+            setWelcomeMessage(`Welcome back, ${name}!`);
+
+            setTimeout(() => {
+              if (isMounted) setWelcomeMessage("");
+            }, 4000);
+          };
+          fetchProfile();
+        }, 0);
       } else if (event === "SIGNED_OUT") {
         setUsername("User");
       }
-    });
+      },
+    );
 
     return () => {
       isMounted = false;
-      subscription.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, [supabase]);
+
+  // Listen for manual profile updates from the Settings page
+  useEffect(() => {
+    const handleProfileUpdate = async () => {
+      if (!user?.id) return;
+
+      const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+
+      if (profile?.username) {
+        setUsername(profile.username);
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdate);
+    };
+  }, [user?.id, supabase]);
 
   if (loading) {
     return <div className="h-10 w-32 animate-pulse rounded-lg bg-slate-200" />;

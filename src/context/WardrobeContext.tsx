@@ -6,10 +6,10 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { NewWardrobeItem, WardrobeItem } from "@/src/wardrobe/types";
 import { createClient } from "@/src/utils/supabase/client";
 
@@ -49,45 +49,16 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
       setUserId(session?.user?.id ?? null);
-    });
+      },
+    );
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
-
-  useLayoutEffect(() => {
-    if (!isLoaded) return;
-
-    previousUserIdRef.current = userId;
-
-    if (userId !== null) {
-      setItems([]);
-      return;
-    }
-
-    try {
-      let raw = window.localStorage.getItem(guestStorageKey());
-      if (!raw) {
-        const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
-        if (legacy) {
-          raw = legacy;
-          window.localStorage.setItem(guestStorageKey(), legacy);
-          window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-        }
-      }
-      if (raw) {
-        setItems(JSON.parse(raw) as WardrobeItem[]);
-      } else {
-        setItems([]);
-      }
-    } catch (error) {
-      console.error("Unable to load wardrobe items from localStorage", error);
-      setItems([]);
-    }
-  }, [isLoaded, userId]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -119,11 +90,21 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
       try {
         const response = await fetch(item.url);
         const blob = await response.blob();
-        const fileName = `${session.user.id}-${Date.now()}.jpeg`;
+        const detectedContentType =
+          blob.type && blob.type.startsWith("image/")
+            ? blob.type
+            : "image/jpeg";
+        const extension =
+          detectedContentType === "image/png"
+            ? "png"
+            : detectedContentType === "image/webp"
+              ? "webp"
+              : "jpeg";
+        const fileName = `${session.user.id}-${Date.now()}.${extension}`;
 
         const { error: storageError } = await supabase.storage
           .from("wardrobe-images")
-          .upload(fileName, blob, { contentType: blob.type || "image/jpeg" });
+          .upload(fileName, blob, { contentType: detectedContentType });
         if (storageError) throw storageError;
 
         const {
@@ -162,11 +143,6 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
   };
 
   const removeItem = async (id: string) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to permanently delete this item? This cannot be undone.",
-    );
-    if (!confirmDelete) return;
-
     const itemToRemove = items.find((i) => i.id === id);
     if (!itemToRemove) return;
 
@@ -193,13 +169,12 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
             .from("wardrobe-images")
             .remove([filePath]);
 
-          if (storageError)
-            console.error("Storage deletion error:", storageError);
+          if (storageError) throw storageError;
         }
       } catch (error) {
         console.error("Cloud deletion failed:", error);
         setItems((currentItems) => [itemToRemove, ...currentItems]);
-        alert(
+        throw new Error(
           "Failed to delete the item from the cloud. Please try again.",
         );
       }
@@ -253,14 +228,38 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         }));
         setItems(cloudItems);
       } else {
-        const storedItems = window.localStorage.getItem(guestStorageKey());
-        setItems(storedItems ? JSON.parse(storedItems) : []);
+        let raw = window.localStorage.getItem(guestStorageKey());
+        if (!raw) {
+          const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (legacy) {
+            raw = legacy;
+            window.localStorage.setItem(guestStorageKey(), legacy);
+            window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+          }
+        }
+        setItems(raw ? JSON.parse(raw) : []);
       }
     } catch (error) {
       console.error("Unable to load wardrobe items", error);
       setItems([]);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    // If switching from guest to logged-in, clear local storage
+    if (previousUserIdRef.current === null && userId !== null) {
+      try {
+        window.localStorage.removeItem(guestStorageKey());
+        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+      } catch (e) {}
+    }
+    previousUserIdRef.current = userId;
+
+    // Fetch data immediately
+    fetchWardrobeItems();
+  }, [isLoaded, userId, fetchWardrobeItems]);
 
   return (
     <WardrobeContext.Provider

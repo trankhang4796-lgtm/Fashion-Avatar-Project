@@ -1,12 +1,13 @@
 "use client";
 
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useEffect, useRef, useState } from "react";
 import { useWardrobe } from "@/src/context/WardrobeContext";
 import { createClient } from "@/src/utils/supabase/client";
 import {
   deleteOutfitFromCloud,
   getSavedOutfits,
+  toggleOutfitPublish,
   type SavedOutfit,
 } from "@/src/utils/outfits";
 import ImageGrid from "./ImageGrid";
@@ -39,6 +40,20 @@ export default function WardrobeSidebar({
   const { items, isLoaded, removeItem, clearGuestWardrobe, fetchWardrobeItems } =
     useWardrobe();
 
+  const handleRemoveItem = async (id: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to permanently delete this item? This cannot be undone.",
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await removeItem(id);
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      alert("Failed to delete the item. Please try again.");
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     void (async () => {
@@ -67,38 +82,22 @@ export default function WardrobeSidebar({
   useEffect(() => {
     const supabase = createClient();
 
-    const clearGuestState = () => {
-      createdUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-      createdUrlsRef.current = [];
-      setUploadedImageUrls([]);
-      clearGuestWardrobe();
-    };
-
     void supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        clearGuestState();
-        void fetchWardrobeItems();
-      }
+      setUser(session?.user ?? null);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setUser(session.user);
-        clearGuestState();
-        void fetchWardrobeItems();
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        clearGuestState();
-      }
-    });
+    } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+      setUser(session?.user ?? null);
+      },
+    );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [clearGuestWardrobe, fetchWardrobeItems]);
+  }, []);
 
   const filteredItems = items.filter((item) =>
     activeTab === "owned" ? item.isOwned : !item.isOwned,
@@ -188,26 +187,30 @@ export default function WardrobeSidebar({
                     <p className="truncate text-sm font-semibold text-slate-800">
                       {outfit.name}
                     </p>
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-3 flex flex-col gap-1 w-16">
                       {outfit.upperWear?.url ? (
                         <img
                           src={outfit.upperWear.url}
                           alt={`${outfit.name} upper`}
-                          className="h-10 w-10 rounded-md object-cover"
+                          className="h-16 w-16 rounded-md border border-slate-100 bg-slate-50 object-cover p-1"
                         />
-                      ) : null}
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-md border border-slate-100 bg-slate-50 text-[10px] text-slate-400">
+                          No Top
+                        </div>
+                      )}
+
                       {outfit.lowerWear?.url ? (
                         <img
                           src={outfit.lowerWear.url}
                           alt={`${outfit.name} lower`}
-                          className="h-10 w-10 rounded-md object-cover"
+                          className="h-16 w-16 rounded-md border border-slate-100 bg-slate-50 object-cover p-1"
                         />
-                      ) : null}
-                      {!outfit.upperWear?.url && !outfit.lowerWear?.url ? (
-                        <span className="text-xs text-slate-400">
-                          No thumbnails
-                        </span>
-                      ) : null}
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-md border border-slate-100 bg-slate-50 text-[10px] text-slate-400">
+                          No Btm
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
@@ -245,6 +248,23 @@ export default function WardrobeSidebar({
                     >
                       Delete
                     </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await toggleOutfitPublish(outfit.id, !outfit.isPublished);
+                        } catch (err: any) {
+                          alert(err.message);
+                        }
+                      }}
+                      className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+                        outfit.isPublished
+                          ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                          : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {outfit.isPublished ? "Remove from Community" : "Publish to Community"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -261,7 +281,7 @@ export default function WardrobeSidebar({
         <ImageGrid
           key={user?.id ?? "guest"}
           images={filteredItems}
-          onRemove={removeItem}
+          onRemove={handleRemoveItem}
         />
       )}
     </div>
