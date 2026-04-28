@@ -145,6 +145,7 @@ export default function CommunityPage() {
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
+            <option value="most_likes">Most Likes</option>
           </select>
         </div>
       </div>

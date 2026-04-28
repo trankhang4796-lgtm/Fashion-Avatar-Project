@@ -190,22 +190,41 @@ export async function getCommunityOutfits(
 
   if (sortBy === "oldest") {
     query = query.order("created_at", { ascending: true });
+  } else if (sortBy === "newest") {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  if (sortBy === "most_likes") {
+    // Manually sort by likes count in JS, then paginate
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching community outfits:", error);
+      return [];
+    }
+
+    const allOutfits = data.map((row: any) => toSavedOutfit(row, currentUserId));
+    
+    // Sort descending by likesCount
+    allOutfits.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+
+    // Manual Pagination
+    const from = page * limit;
+    return allOutfits.slice(from, from + limit);
   } else {
-    query = query.order("created_at", { ascending: false }); // Default newest
+    // Database-level pagination for newest/oldest
+    const from = page * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching community outfits:", error);
+      return [];
+    }
+    return data.map((row: any) => toSavedOutfit(row, currentUserId));
   }
-
-  // Pagination logic
-  const from = page * limit;
-  const to = from + limit - 1;
-  query = query.range(from, to);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching community outfits:", error);
-    return [];
-  }
-  return data.map((row: any) => toSavedOutfit(row, currentUserId));
 }
 
 export function subscribeToSavedOutfits(onStoreChange: () => void) {
