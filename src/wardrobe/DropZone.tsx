@@ -62,7 +62,7 @@ export default function DropZone({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif,.webp,.bmp,.psd,.raw"
         multiple
         className="hidden"
         onChange={onFileChange}

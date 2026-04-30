@@ -1,5 +1,7 @@
 "use client";
 
+import { removeBackground } from "@imgly/background-removal";
+import heic2any from "heic2any";
 import Image from "next/image";
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import { useWardrobe } from "@/src/context/WardrobeContext";
@@ -40,6 +42,9 @@ export default function WardrobeUploader({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progressText, setProgressText] = useState("Initializing AI...");
+  const [progressPercent, setProgressPercent] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -71,16 +76,91 @@ export default function WardrobeUploader({
     }
   };
 
+  const processImageFile = async (file: File): Promise<File> => {
+    setIsProcessing(true);
+
+    try {
+      let processedFile: File = file;
+
+      // STEP 1: Convert HEIC/HEIF to PNG for browser compatibility
+      const fileName = file.name.toLowerCase();
+      if (fileName.endsWith(".heic") || fileName.endsWith(".heif")) {
+        const convertedBlob = await heic2any({ blob: file, toType: "image/png" });
+        // Handle case where heic2any returns an array of blobs
+        const singleBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        processedFile = new File(
+          [singleBlob as BlobPart],
+          file.name.replace(/\.heic|\.heif/i, ".png"),
+          { type: "image/png" },
+        );
+      }
+
+      // STEP 2: Remove the Background using AI with progress tracking
+      const imageBlob = await removeBackground(processedFile, {
+        progress: (key, current, total) => {
+          const percentage = Math.round((current / total) * 100);
+          setProgressPercent(percentage);
+
+          // 'key' tells us what the AI is doing (e.g., fetching models or computing)
+          if (key.includes("fetch")) {
+            setProgressText("Downloading AI model (only happens once)...");
+          } else if (key.includes("compute")) {
+            setProgressText("Removing background...");
+          } else {
+            setProgressText("Processing image...");
+          }
+        },
+      });
+
+      // Create the final clean file
+      const finalFileName =
+        processedFile.name.replace(/\.[^/.]+$/, "") + "-nobg.png";
+      const finalFile = new File([imageBlob], finalFileName, {
+        type: "image/png",
+      });
+
+      return finalFile;
+    } catch (error) {
+      console.error("Error processing image:", error);
+      alert("Failed to process the image. Please try a standard JPG or PNG.");
+      throw error;
+    } finally {
+      setIsProcessing(false);
+      setProgressPercent(0);
+      setProgressText("Initializing AI...");
+    }
+  };
+
   const addFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const nextFile = Array.from(files).find((file) =>
-      file.type.startsWith("image/"),
-    );
+    const allowedExtensions = [
+      ".heic",
+      ".heif",
+      ".webp",
+      ".bmp",
+      ".psd",
+      ".raw",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+    ];
+
+    const nextFile = Array.from(files).find((file) => {
+      if (file.type.startsWith("image/")) return true;
+      const lowerName = file.name.toLowerCase();
+      return allowedExtensions.some((ext) => lowerName.endsWith(ext));
+    });
 
     if (!nextFile) return;
 
-    await setPendingFromFile(nextFile);
+    try {
+      const finalFile = await processImageFile(nextFile);
+      await setPendingFromFile(finalFile);
+    } catch {
+      // errors already handled in pipeline
+    }
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -140,7 +220,13 @@ export default function WardrobeUploader({
       async (blob) => {
         if (!blob) return;
 
-        await setPendingFromFile(blob);
+        try {
+          const cameraFile = new File([blob], "camera.jpg", { type: blob.type || "image/jpeg" });
+          const finalFile = await processImageFile(cameraFile);
+          await setPendingFromFile(finalFile);
+        } catch {
+          // errors already handled in pipeline
+        }
         stopCamera();
       },
       "image/jpeg",
@@ -180,6 +266,23 @@ export default function WardrobeUploader({
         onFileChange={handleFileChange}
         onToggleCamera={isCameraOpen ? stopCamera : startCamera}
       />
+
+      {isProcessing && (
+        <div className="mt-4 w-full max-w-sm flex flex-col items-center justify-center space-y-2 mx-auto">
+          <p className="text-sm font-medium text-foreground/80 animate-pulse">
+            {progressText}
+          </p>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+            <div
+              className="h-full bg-brand-mint transition-all duration-300 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="text-xs text-foreground/50 text-right w-full">
+            {progressPercent}%
+          </p>
+        </div>
+      )}
 
       {isCameraOpen && (
         <CameraView
