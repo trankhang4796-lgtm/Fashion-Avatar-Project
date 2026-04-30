@@ -36,6 +36,8 @@ export default function WardrobeSidebar({
   );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
+  const [outfitToDelete, setOutfitToDelete] = useState<SavedOutfit | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [, setUploadedImageUrls] = useState<string[]>([]);
   const createdUrlsRef = useRef<string[]>([]);
@@ -50,18 +52,8 @@ export default function WardrobeSidebar({
     setEditingOutfit,
   } = useWardrobe();
 
-  const handleRemoveItem = async (id: string) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to permanently delete this item? This cannot be undone.",
-    );
-    if (!confirmDelete) return;
-
-    try {
-      await removeItem(id);
-    } catch (error) {
-      console.error("Failed to delete item:", error);
-      alert("Failed to delete the item. Please try again.");
-    }
+  const handleRemoveItem = (id: string) => {
+    setItemToDelete(id);
   };
 
   useEffect(() => {
@@ -281,25 +273,7 @@ export default function WardrobeSidebar({
                     </button>
                     <button
                       type="button"
-                      onClick={async () => {
-                        const confirmDelete = window.confirm(
-                          "Are you sure you want to permanently delete this outfit? This cannot be undone.",
-                        );
-                        if (!confirmDelete) return;
-
-                        try {
-                          // Delete from the database
-                          await deleteOutfitFromCloud(outfit.id);
-
-                          // Optimistically remove it from the UI so it vanishes instantly
-                          setSavedOutfits((current) =>
-                            current.filter((o) => o.id !== outfit.id),
-                          );
-                        } catch (error) {
-                          console.error("Failed to delete outfit:", error);
-                          alert("Failed to delete the outfit. Please try again.");
-                        }
-                      }}
+                      onClick={() => setOutfitToDelete(outfit)}
                       className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
                     >
                       Delete
@@ -382,6 +356,73 @@ export default function WardrobeSidebar({
           </div>
         </div>
       ) : null}
+
+      {/* Custom Delete Modal for Sidebar */}
+      {outfitToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 cursor-default">
+          <div className="relative w-full max-w-md rounded-2xl border border-border-theme bg-surface p-6 shadow-xl text-foreground text-left">
+            <button onClick={() => setOutfitToDelete(null)} className="absolute right-4 top-4 text-foreground/50 hover:text-foreground">✕</button>
+            <h2 className="text-xl font-bold mb-2">Delete Outfit</h2>
+            <p className="text-sm text-foreground/70 mb-6">Are you sure you want to permanently delete "{outfitToDelete.name}"? This action cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setOutfitToDelete(null)} 
+                className="px-4 py-2 rounded-lg border border-border-theme text-sm font-medium hover:bg-surface-alt transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    await deleteOutfitFromCloud(outfitToDelete.id);
+                    setSavedOutfits((current) => current.filter((o) => o.id !== outfitToDelete.id));
+                    setOutfitToDelete(null);
+                  } catch (error) {
+                    console.error("Failed to delete outfit:", error);
+                    alert("Failed to delete the outfit. Please try again.");
+                  }
+                }} 
+                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Outfit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Modal for Clothing Items (Sidebar) */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 cursor-default">
+          <div className="relative w-full max-w-md rounded-2xl border border-border-theme bg-surface p-6 shadow-xl text-foreground text-left">
+            <button onClick={() => setItemToDelete(null)} className="absolute right-4 top-4 text-foreground/50 hover:text-foreground">✕</button>
+            <h2 className="text-xl font-bold mb-2">Delete Item</h2>
+            <p className="text-sm text-foreground/70 mb-6">Are you sure you want to permanently delete this clothing item? This action cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setItemToDelete(null)} 
+                className="px-4 py-2 rounded-lg border border-border-theme text-sm font-medium hover:bg-surface-alt transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    await removeItem(itemToDelete!);
+                    setItemToDelete(null);
+                  } catch (error) {
+                    console.error("Failed to delete the item:", error);
+                    alert("Failed to delete the item. Please try again.");
+                  }
+                }} 
+                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
