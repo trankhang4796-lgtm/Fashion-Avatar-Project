@@ -5,6 +5,8 @@ import heic2any from "heic2any";
 import Image from "next/image";
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import { useWardrobe } from "@/src/context/WardrobeContext";
+import { createClient } from "@/src/utils/supabase/client";
+import UsernameSetupModal from "@/src/components/UsernameSetupModal";
 import CameraView from "./CameraView";
 import ClothingType from "./ClothingType";
 import DropZone from "./DropZone";
@@ -45,6 +47,7 @@ export default function WardrobeUploader({
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressText, setProgressText] = useState("Initializing AI...");
   const [progressPercent, setProgressPercent] = useState(0);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -234,8 +237,26 @@ export default function WardrobeUploader({
     );
   };
 
-  const handleAddToWardrobe = () => {
+  const handleAddToWardrobe = async () => {
     if (!pendingImage) return;
+
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", session.user.id)
+        .single();
+
+      if (!profile || !profile.username || profile.username.startsWith("User_")) {
+        setShowUsernameModal(true);
+        return;
+      }
+    }
 
     addItem({
       url: pendingImage.url,
@@ -348,6 +369,16 @@ export default function WardrobeUploader({
             </div>
           </div>
         </div>
+      )}
+
+      {showUsernameModal && (
+        <UsernameSetupModal
+          onComplete={() => {
+            setShowUsernameModal(false);
+            handleAddToWardrobe();
+          }}
+          onCancel={() => setShowUsernameModal(false)}
+        />
       )}
     </section>
   );

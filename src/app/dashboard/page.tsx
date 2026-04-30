@@ -7,6 +7,8 @@ import { useWardrobe } from "@/src/context/WardrobeContext";
 import WardrobeSidebar from "@/src/wardrobe/WardrobeSidebar";
 import type { SavedOutfit } from "@/src/utils/outfits";
 import { saveOutfitToCloud, updateOutfitInCloud } from "@/src/utils/outfits";
+import { createClient } from "@/src/utils/supabase/client";
+import UsernameSetupModal from "@/src/components/UsernameSetupModal";
 
 export default function DashboardPage() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
@@ -14,6 +16,7 @@ export default function DashboardPage() {
   const [lowerWear, setLowerWear] = useState<WardrobeItem | null>(null);
   const [saveMessage, setSaveMessage] = useState("");
   const [newlySavedOutfit, setNewlySavedOutfit] = useState<SavedOutfit | null>(null);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   const { editingOutfit, setEditingOutfit } = useWardrobe();
 
@@ -30,6 +33,25 @@ export default function DashboardPage() {
       return;
     }
 
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", session.user.id)
+        .single();
+
+      // If no profile, no username, or they still have an auto-generated "User_" name
+      if (!profile || !profile.username || profile.username.startsWith("User_")) {
+        setShowUsernameModal(true);
+        return;
+      }
+    }
+
     try {
       setSaveMessage("Saving...");
       const savedOutfit = await saveOutfitToCloud({
@@ -40,7 +62,6 @@ export default function DashboardPage() {
 
       setSaveMessage(`${savedOutfit.name} saved securely to cloud!`);
     } catch (error: any) {
-      // This will catch the 'You must be logged in' error
       setSaveMessage(error.message || "Failed to save outfit.");
     }
   };
@@ -122,6 +143,16 @@ export default function DashboardPage() {
           onLowerWearChange={setLowerWear}
         />
       </section>
+
+      {showUsernameModal && (
+        <UsernameSetupModal
+          onComplete={() => {
+            setShowUsernameModal(false);
+            handleSaveOutfit();
+          }}
+          onCancel={() => setShowUsernameModal(false)}
+        />
+      )}
     </main>
   );
 }

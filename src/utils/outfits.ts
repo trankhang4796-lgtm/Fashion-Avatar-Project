@@ -140,6 +140,34 @@ export async function deleteOutfitFromCloud(id: string) {
 
   if (!session?.user) return;
 
+  const { data: outfitRow, error: outfitFetchError } = await supabase
+    .from("saved_outfits")
+    .select("upper_wear, lower_wear")
+    .eq("id", id)
+    .single();
+
+  if (outfitFetchError) {
+    console.error("Error fetching outfit for deletion:", outfitFetchError);
+  } else {
+    const upperWearUrl: string | undefined = outfitRow?.upper_wear?.url;
+    const lowerWearUrl: string | undefined = outfitRow?.lower_wear?.url;
+
+    const deleteStorageFile = async (itemUrl: string | undefined) => {
+      if (!itemUrl) return;
+      const urlParts = itemUrl.split("/wardrobe-images/");
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1].split("?")[0];
+        const { error: storageError } = await supabase.storage
+          .from("wardrobe-images")
+          .remove([filePath]);
+        if (storageError) console.error("Failed to delete image file:", storageError);
+      }
+    };
+
+    await deleteStorageFile(upperWearUrl);
+    await deleteStorageFile(lowerWearUrl);
+  }
+
   const { error } = await supabase.from("saved_outfits").delete().eq("id", id);
 
   if (error) {

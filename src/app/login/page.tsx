@@ -42,10 +42,10 @@ export default function LoginPage() {
   return (
     <main className="min-h-[calc(100vh-73px)] flex items-center justify-center p-6">
       <div className="max-w-md w-full rounded-2xl bg-white dark:bg-slate-800 p-8 shadow-xl border border-slate-100 dark:border-slate-700">
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-2xl font-semibold transition-colors">
           {isSignUp ? 'Create your account' : 'Welcome back'}
         </h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-slate-500">
           {isSignUp
             ? 'Sign up with your email and password.'
             : 'Sign in with your email and password.'}
@@ -61,7 +61,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label
               htmlFor="email"
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-slate-500"
             >
               Email
             </label>
@@ -81,7 +81,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label
               htmlFor="password"
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-slate-500"
             >
               Password
             </label>
@@ -121,7 +121,7 @@ export default function LoginPage() {
               setIsSignUp((v) => !v)
               setError(null)
             }}
-            className="font-semibold text-slate-900 underline underline-offset-4 hover:opacity-80"
+            className="font-semibold transition-colors underline underline-offset-4 hover:opacity-80"
             disabled={loading}
           >
             {isSignUp ? 'Sign in' : 'Sign up'}

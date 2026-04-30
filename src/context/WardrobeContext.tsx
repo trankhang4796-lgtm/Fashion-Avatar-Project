@@ -54,8 +54,11 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-      setUserId(session?.user?.id ?? null);
+      (event: AuthChangeEvent, session: Session | null) => {
+        if (event === "SIGNED_OUT") {
+          setItems([]); // Clear items instantly so they don't leak into guest storage
+        }
+        setUserId(session?.user?.id ?? null);
       },
     );
 

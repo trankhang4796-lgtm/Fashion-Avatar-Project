@@ -33,7 +33,7 @@ export default function AvatarCanvas({
 
   return (
     <div
-      className="flex aspect-[1/2] w-72 flex-col gap-4 overflow-hidden rounded-3xl border-4 border-slate-800 bg-white dark:bg-slate-800 p-4 shadow-xl md:w-96"
+      className="flex aspect-[1/2] w-72 flex-col gap-4 overflow-hidden rounded-3xl border-4 border-slate-800 bg-white dark:bg-surface p-4 shadow-xl md:w-96"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >

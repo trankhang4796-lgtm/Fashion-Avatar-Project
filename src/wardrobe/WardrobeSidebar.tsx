@@ -329,7 +329,7 @@ export default function WardrobeSidebar({
             onClick={() => setIsAddModalOpen(false)}
           />
 
-          <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-slate-200 bg-surface p-5 shadow-2xl">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
@@ -340,10 +340,10 @@ export default function WardrobeSidebar({
             </button>
 
             <div className="pr-10">
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold transition-colors">
                 Add Clothing
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-500">
                 Upload from files, drag and drop, or take a photo.
               </p>
             </div>
