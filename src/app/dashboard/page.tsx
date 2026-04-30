@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AvatarCanvas from "@/src/avatar/AvatarCanvas";
 import { WardrobeItem } from "@/src/wardrobe/types";
+import { useWardrobe } from "@/src/context/WardrobeContext";
 import WardrobeSidebar from "@/src/wardrobe/WardrobeSidebar";
 import type { SavedOutfit } from "@/src/utils/outfits";
-import { saveOutfitToCloud } from "@/src/utils/outfits";
+import { saveOutfitToCloud, updateOutfitInCloud } from "@/src/utils/outfits";
 
 export default function DashboardPage() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
@@ -13,6 +14,15 @@ export default function DashboardPage() {
   const [lowerWear, setLowerWear] = useState<WardrobeItem | null>(null);
   const [saveMessage, setSaveMessage] = useState("");
   const [newlySavedOutfit, setNewlySavedOutfit] = useState<SavedOutfit | null>(null);
+
+  const { editingOutfit, setEditingOutfit } = useWardrobe();
+
+  useEffect(() => {
+    if (editingOutfit) {
+      setUpperWear(editingOutfit.upperWear);
+      setLowerWear(editingOutfit.lowerWear);
+    }
+  }, [editingOutfit]);
 
   const handleSaveOutfit = async () => {
     if (!upperWear && !lowerWear) {
@@ -57,13 +67,46 @@ export default function DashboardPage() {
       {/* Center stage – blank canvas */}
       <section className="relative flex flex-1 items-center justify-center transition-all duration-300 ease-in-out">
         <div className="absolute right-6 top-6 z-10 flex flex-col items-end gap-2">
-          <button
-            type="button"
-            onClick={handleSaveOutfit}
-            className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
-          >
-            Save Outfit
-          </button>
+          <div className="flex gap-2">
+            {editingOutfit ? (
+              <>
+                <button
+                  onClick={async () => {
+                    try {
+                      setSaveMessage("Updating...");
+                      const updatedOutfit = await updateOutfitInCloud(editingOutfit.id, upperWear, lowerWear);
+                      setNewlySavedOutfit(updatedOutfit); // This sends the updated data instantly to the sidebar!
+                      setSaveMessage("Outfit updated!");
+                      setEditingOutfit(null); // Exit edit mode
+                    } catch (e: any) {
+                      setSaveMessage("Failed to update.");
+                    }
+                  }}
+                  className="rounded-lg bg-brand-mint px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-forest"
+                >
+                  Update Outfit
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingOutfit(null);
+                    setUpperWear(null);
+                    setLowerWear(null);
+                    setSaveMessage("Discarded changes.");
+                  }}
+                  className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/70 shadow-sm hover:bg-surface-alt"
+                >
+                  Discard
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleSaveOutfit}
+                className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
+              >
+                Save Outfit
+              </button>
+            )}
+          </div>
 
           {saveMessage ? (
             <p className="rounded-lg bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm">

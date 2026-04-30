@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useWardrobe } from "@/src/context/WardrobeContext";
 import type { SavedOutfit } from "@/src/utils/outfits";
 import { deleteOutfitFromCloud, toggleOutfitPublish } from "@/src/utils/outfits";
 
@@ -61,6 +63,9 @@ function PreviewTile({
 }
 
 export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
+  const router = useRouter();
+  const { editingOutfit, setEditingOutfit } = useWardrobe();
+
   return (
     <article className="rounded-2xl border border-border-theme bg-surface text-foreground p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       <div className="flex items-start justify-between gap-3">
@@ -79,6 +84,21 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setEditingOutfit(outfit);
+            router.push("/dashboard");
+          }}
+          className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+            editingOutfit?.id === outfit.id
+              ? "bg-brand-mint text-white border-brand-mint"
+              : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-border-theme dark:text-foreground/70 dark:hover:bg-surface-alt"
+          }`}
+        >
+          {editingOutfit?.id === outfit.id ? "Editing..." : "Edit"}
+        </button>
+
         <button
           type="button"
           onClick={async () => {

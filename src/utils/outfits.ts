@@ -261,3 +261,45 @@ export async function toggleOutfitLike(outfitId: string, currentlyLiked: boolean
     if (error) throw error;
   }
 }
+
+export async function updateOutfitInCloud(
+  id: string,
+  upperWear: WardrobeItem | null,
+  lowerWear: WardrobeItem | null,
+): Promise<SavedOutfit> {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  
+  if (!session?.user) throw new Error("Not logged in");
+
+  const { data, error } = await supabase
+    .from("saved_outfits")
+    .update({
+      upper_wear: upperWear,
+      lower_wear: lowerWear,
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  // Trigger UI sync for other tabs/components
+  window.dispatchEvent(new Event("saved-outfits-updated"));
+
+  // Return the newly formatted outfit
+  return toSavedOutfit(
+    {
+      id: data.id,
+      user_id: data.user_id,
+      name: data.name,
+      upper_wear: data.upper_wear,
+      lower_wear: data.lower_wear,
+      created_at: data.created_at,
+      is_published: data.is_published,
+    },
+    session.user.id,
+  );
+}

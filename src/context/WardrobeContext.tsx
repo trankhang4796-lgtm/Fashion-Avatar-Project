@@ -12,6 +12,7 @@ import {
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { NewWardrobeItem, WardrobeItem } from "@/src/wardrobe/types";
 import { createClient } from "@/src/utils/supabase/client";
+import type { SavedOutfit } from "@/src/utils/outfits";
 
 interface WardrobeContextValue {
   items: WardrobeItem[];
@@ -20,6 +21,8 @@ interface WardrobeContextValue {
   removeItem: (id: string) => Promise<void>;
   clearGuestWardrobe: () => void;
   fetchWardrobeItems: () => Promise<void>;
+  editingOutfit: SavedOutfit | null;
+  setEditingOutfit: (outfit: SavedOutfit | null) => void;
 }
 
 /** Legacy single bucket (migrated into guest). */
@@ -38,6 +41,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const previousUserIdRef = useRef<string | null>(null);
+  const [editingOutfit, setEditingOutfit] = useState<SavedOutfit | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -270,6 +274,8 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         removeItem,
         clearGuestWardrobe,
         fetchWardrobeItems,
+        editingOutfit,
+        setEditingOutfit,
       }}
     >
       {children}

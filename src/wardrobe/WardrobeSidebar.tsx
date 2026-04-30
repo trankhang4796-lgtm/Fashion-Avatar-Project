@@ -2,6 +2,7 @@
 
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useWardrobe } from "@/src/context/WardrobeContext";
 import { createClient } from "@/src/utils/supabase/client";
 import {
@@ -29,6 +30,7 @@ export default function WardrobeSidebar({
   onEquipOutfit,
   newlySavedOutfit,
 }: WardrobeSidebarProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"owned" | "unowned" | "outfits">(
     "owned",
   );
@@ -38,8 +40,15 @@ export default function WardrobeSidebar({
   const [, setUploadedImageUrls] = useState<string[]>([]);
   const createdUrlsRef = useRef<string[]>([]);
 
-  const { items, isLoaded, removeItem, clearGuestWardrobe, fetchWardrobeItems } =
-    useWardrobe();
+  const {
+    items,
+    isLoaded,
+    removeItem,
+    clearGuestWardrobe,
+    fetchWardrobeItems,
+    editingOutfit,
+    setEditingOutfit,
+  } = useWardrobe();
 
   const handleRemoveItem = async (id: string) => {
     const confirmDelete = window.confirm(
@@ -70,11 +79,18 @@ export default function WardrobeSidebar({
   useEffect(() => {
     if (newlySavedOutfit) {
       setSavedOutfits((currentOutfits) => {
-        // Prevent duplicates in case React strict-mode double-fires
-        if (currentOutfits.some((o) => o.id === newlySavedOutfit.id)) {
-          return currentOutfits;
+        const existingIndex = currentOutfits.findIndex(
+          (o) => o.id === newlySavedOutfit.id,
+        );
+
+        if (existingIndex >= 0) {
+          // If the outfit already exists (we are editing it), replace it instantly
+          const updatedList = [...currentOutfits];
+          updatedList[existingIndex] = newlySavedOutfit;
+          return updatedList;
         }
-        // Push the new outfit to the very top of the list
+
+        // If it's a brand new outfit, push it to the very top of the list
         return [newlySavedOutfit, ...currentOutfits];
       });
     }
@@ -240,6 +256,20 @@ export default function WardrobeSidebar({
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingOutfit(outfit);
+                        router.push("/dashboard");
+                      }}
+                      className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+                        editingOutfit?.id === outfit.id
+                          ? "bg-brand-mint text-white border-brand-mint"
+                          : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-border-theme dark:text-foreground/70 dark:hover:bg-surface-alt"
+                      }`}
+                    >
+                      {editingOutfit?.id === outfit.id ? "Editing..." : "Edit"}
+                    </button>
                     <button
                       type="button"
                       onClick={() =>
