@@ -24,8 +24,9 @@
 The `node_modules` and `.next` folders are intentionally ignored by Git to save space and prevent OS conflicts. 
 When you clone this repository to your laptop for <ins>the first time</ins>, you MUST download the dependencies yourself.
 
-**In the terminal:**
-* First run `npm install`
-* Then run `npm install @supabase/supabase-js @supabase/ssr`
-* Next run `npm install next-themes`
-* Finally, run `npm run dev`
+**In the terminal, run these in order:**
+* `npm install`
+* `npm install @supabase/supabase-js @supabase/ssr`
+* `npm install next-themes`
+* `npm install @imgly/background-removal heic2any`
+* `npm run dev`
