@@ -27,4 +27,5 @@ When you clone this repository to your laptop for <ins>the first time</ins>, you
 **In the terminal:**
 * First run `npm install`
 * Then run `npm install @supabase/supabase-js @supabase/ssr`
+* Next run `npm install next-themes`
 * Finally, run `npm run dev`
