@@ -40,7 +40,7 @@ export default function DashboardPage() {
       {/* Wardrobe – left sliding sidebar */}
       <aside
         className={`h-full border-r transition-all duration-300 ease-in-out ${
-          isWardrobeOpen ? "w-1/2 border-slate-200" : "w-20 border-transparent"
+          isWardrobeOpen ? "w-1/2 border-border-theme" : "w-20 border-transparent"
         }`}
       >
         <WardrobeSidebar

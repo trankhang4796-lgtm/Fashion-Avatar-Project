@@ -8,6 +8,7 @@ import {
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import { WardrobeProvider } from "@/src/context/WardrobeContext";
+import { ThemeProvider } from "@/src/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,14 +44,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${jakarta.variable} antialiased bg-brand-cream text-brand-forest`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${jakarta.variable} antialiased bg-brand-cream text-brand-forest dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300`}
       >
-        <WardrobeProvider>
-          <Navbar />
-          {children}
-        </WardrobeProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <WardrobeProvider>
+            <Navbar />
+            {children}
+          </WardrobeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -17,9 +17,9 @@ export default function WardrobeGrid({
       {items.map((item, index) => (
         <article
           key={item.id}
-          className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          className="overflow-hidden rounded-2xl border border-border-theme bg-surface shadow-sm"
         >
-          <div className="relative aspect-square bg-slate-50">
+          <div className="relative aspect-square bg-surface-alt">
             <Image
               src={item.url}
               alt={`Wardrobe item ${index + 1}`}
@@ -31,7 +31,7 @@ export default function WardrobeGrid({
             <button
               type="button"
               onClick={() => onRemove(item.id)}
-              className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1 text-sm font-medium text-slate-500 shadow-sm hover:text-red-500"
+              className="absolute right-3 top-3 rounded-full border border-border-theme bg-surface px-2.5 py-1 text-sm font-medium text-foreground/70 shadow-sm hover:text-red-500"
             >
               Remove
             </button>
@@ -39,14 +39,14 @@ export default function WardrobeGrid({
 
           <div className="flex items-center justify-between gap-3 p-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-foreground">
                 {item.type === "upper" ? "Upper-wear" : "Lower-wear"}
               </p>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-foreground">
                 {item.isOwned ? "Owned" : "Wishlist"}
               </p>
             </div>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            <span className="rounded-full border border-border-theme bg-background px-3 py-1 text-xs font-medium text-foreground">
               {item.isOwned ? "Ready" : "Saved"}
             </span>
           </div>

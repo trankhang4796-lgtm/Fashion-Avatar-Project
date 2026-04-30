@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { createClient } from "@/src/utils/supabase/client";
 import { validateUsername, RESTRICTED_WORDS } from "@/src/utils/validation";
 import type { User } from "@supabase/supabase-js";
@@ -41,6 +42,23 @@ export default function SettingsPage() {
   const [measurementSystem, setMeasurementSystem] = useState<"imperial" | "metric">("imperial");
   const [defaultWardrobeView, setDefaultWardrobeView] = useState<"owned" | "unowned" | "outfits">("owned");
   const [askBeforeCamera, setAskBeforeCamera] = useState(true);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // Check URL for a specific tab to open (e.g., ?tab=preferences)
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab");
+
+    const validTabs = ["account", "privacy", "appearance", "notifications", "preferences"];
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam as SettingsTab);
+    }
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -234,7 +252,7 @@ export default function SettingsPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">Settings</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-8">Settings</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* SIDEBAR NAVIGATION */}
@@ -245,7 +263,7 @@ export default function SettingsPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                  activeTab === tab.id ? "bg-brand-mint text-white" : "text-slate-600 hover:bg-slate-100"
+                  activeTab === tab.id ? "bg-brand-mint text-white" : "text-foreground/70 hover:bg-surface-alt"
                 }`}
               >
                 <span className="text-lg">{tab.icon}</span>
@@ -259,11 +277,11 @@ export default function SettingsPage() {
         <section className="flex-1">
           {activeTab === "account" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-800 mb-4">Profile</h2>
+              <div className="rounded-2xl border border-border-theme bg-surface p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-foreground mb-4">Profile</h2>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-slate-500 mb-1">Username</label>
+                    <label className="block text-sm font-medium text-foreground/70 mb-1">Username</label>
                     {isEditingUsername ? (
                       <div className="w-full">
                         <input
@@ -273,17 +291,17 @@ export default function SettingsPage() {
                           className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 ${
                             profanityError || availability === "taken"
                               ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                              : "border-slate-300 focus:border-brand-mint focus:ring-brand-mint"
+                              : "border-border-theme focus:border-brand-mint focus:ring-brand-mint"
                           }`}
                         />
 
                         {/* Live Validation Checklist */}
                         <div className="mt-3 flex flex-col gap-1 text-sm">
-                          <div className={`flex items-center gap-2 ${isLengthValid ? "text-brand-mint" : "text-slate-400"}`}>
+                          <div className={`flex items-center gap-2 ${isLengthValid ? "text-brand-mint" : "text-foreground/60"}`}>
                             <span className="text-base">{isLengthValid ? "✓" : "○"}</span>
                             <span>Between 3 and 20 characters</span>
                           </div>
-                          <div className={`flex items-center gap-2 ${isFormatValid ? "text-brand-mint" : "text-slate-400"}`}>
+                          <div className={`flex items-center gap-2 ${isFormatValid ? "text-brand-mint" : "text-foreground/60"}`}>
                             <span className="text-base">{isFormatValid ? "✓" : "○"}</span>
                             <span>Letters, numbers, periods, and underscores only</span>
                           </div>
@@ -293,7 +311,7 @@ export default function SettingsPage() {
                         <div className="mt-2 h-5">
                           {profanityError && <p className="text-sm font-medium text-red-500">{profanityError}</p>}
                           {!profanityError && availability === "checking" && (
-                            <p className="text-sm text-slate-500">Checking availability...</p>
+                            <p className="text-sm text-foreground/70">Checking availability...</p>
                           )}
                           {!profanityError && availability === "taken" && (
                             <p className="text-sm font-medium text-red-500">That username is already taken.</p>
@@ -304,7 +322,7 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-lg font-medium text-slate-900">{username}</p>
+                      <p className="text-lg font-medium text-foreground">{username}</p>
                     )}
                   </div>
                   <div>
@@ -322,7 +340,7 @@ export default function SettingsPage() {
                             setIsEditingUsername(false);
                             setUsernameInput(username);
                           }}
-                          className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                          className="rounded-lg border border-border-theme px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-alt"
                         >
                           Cancel
                         </button>
@@ -330,7 +348,7 @@ export default function SettingsPage() {
                     ) : (
                       <button
                         onClick={() => setIsEditingUsername(true)}
-                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                        className="rounded-lg border border-border-theme px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-alt"
                       >
                         Change Username
                       </button>
@@ -344,14 +362,14 @@ export default function SettingsPage() {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-800 mb-4">Security</h2>
+              <div className="rounded-2xl border border-border-theme bg-surface p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-foreground mb-4">Security</h2>
                 {passwordFlow === "idle" ? (
                   <div>
-                    <p className="text-sm text-slate-600 mb-4">Update the password associated with your account.</p>
+                    <p className="text-sm text-foreground/70 mb-4">Update the password associated with your account.</p>
                     <button
                       onClick={handleStartPasswordChange}
-                      className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                      className="rounded-lg border border-border-theme px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-alt"
                     >
                       Change Password
                     </button>
@@ -359,28 +377,28 @@ export default function SettingsPage() {
                 ) : (
                   <form onSubmit={handleUpdatePassword} className="space-y-5 max-w-sm">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                      <label className="block text-sm font-medium text-foreground/70 mb-1">New Password</label>
                       <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         required
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
+                        className="w-full rounded-lg border border-border-theme px-3 py-2 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
                       />
 
                       {/* Live Password Checklist */}
                       <div className="mt-3 flex flex-col gap-1 text-sm">
-                        <div className={`flex items-center gap-2 ${passwordLengthValid ? "text-brand-mint" : "text-slate-400"}`}>
+                        <div className={`flex items-center gap-2 ${passwordLengthValid ? "text-brand-mint" : "text-foreground/60"}`}>
                           <span className="text-base">{passwordLengthValid ? "✓" : "○"}</span>
                           <span>At least 8 characters</span>
                         </div>
-                        <div className={`flex items-center gap-2 ${passwordUpperLowerValid ? "text-brand-mint" : "text-slate-400"}`}>
+                        <div className={`flex items-center gap-2 ${passwordUpperLowerValid ? "text-brand-mint" : "text-foreground/60"}`}>
                           <span className="text-base">{passwordUpperLowerValid ? "✓" : "○"}</span>
                           <span>Uppercase and lowercase letter</span>
                         </div>
                         <div
                           className={`flex items-center gap-2 ${
-                            passwordNumberSpecialValid ? "text-brand-mint" : "text-slate-400"
+                            passwordNumberSpecialValid ? "text-brand-mint" : "text-foreground/60"
                           }`}
                         >
                           <span className="text-base">{passwordNumberSpecialValid ? "✓" : "○"}</span>
@@ -390,7 +408,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+                      <label className="block text-sm font-medium text-foreground/70 mb-1">Confirm New Password</label>
                       <input
                         type="password"
                         value={confirmPassword}
@@ -399,7 +417,7 @@ export default function SettingsPage() {
                         className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 ${
                           confirmPassword.length > 0 && !passwordsMatch
                             ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                            : "border-slate-300 focus:border-brand-mint focus:ring-brand-mint"
+                            : "border-border-theme focus:border-brand-mint focus:ring-brand-mint"
                         }`}
                       />
                       <div className="mt-1 h-5">
@@ -433,7 +451,7 @@ export default function SettingsPage() {
                           setConfirmPassword("");
                           setPasswordMessage({ type: "", text: "" });
                         }}
-                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                        className="rounded-lg border border-border-theme px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-alt"
                       >
                         Cancel
                       </button>
@@ -452,15 +470,15 @@ export default function SettingsPage() {
           {/* PRIVACY & SAFETY TAB */}
           {activeTab === "privacy" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-800 mb-6">Privacy & Safety</h2>
+              <div className="rounded-2xl border border-border-theme bg-surface p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-foreground mb-6">Privacy & Safety</h2>
 
                 <div className="space-y-6">
                   {/* Profile Visibility */}
-                  <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-6">
+                  <div className="flex items-center justify-between gap-4 border-b border-border-theme pb-6">
                     <div>
-                      <h3 className="text-sm font-medium text-slate-900">Public Profile</h3>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <h3 className="text-sm font-medium text-foreground">Public Profile</h3>
+                      <p className="mt-1 text-sm text-foreground/70">
                         Allow your saved outfits to appear on the Community Feed.
                       </p>
                     </div>
@@ -475,17 +493,17 @@ export default function SettingsPage() {
                         }}
                         className="peer sr-only"
                       />
-                      <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
+                      <div className="peer h-6 w-11 rounded-full bg-surface-alt after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border-theme after:bg-surface after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
                     </label>
                   </div>
 
                   {/* Data Portability */}
-                  <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-6">
+                  <div className="flex items-center justify-between gap-4 border-b border-border-theme pb-6">
                     <div>
-                      <h3 className="text-sm font-medium text-slate-900">Download My Data</h3>
-                      <p className="mt-1 text-sm text-slate-500">Get a copy of your wardrobe items and saved outfits.</p>
+                      <h3 className="text-sm font-medium text-foreground">Download My Data</h3>
+                      <p className="mt-1 text-sm text-foreground/70">Get a copy of your wardrobe items and saved outfits.</p>
                     </div>
-                    <button className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                    <button className="rounded-lg border border-border-theme px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-alt transition-colors">
                       Request Data
                     </button>
                   </div>
@@ -493,7 +511,7 @@ export default function SettingsPage() {
                   {/* Danger Zone */}
                   <div className="pt-2">
                     <h3 className="text-sm font-medium text-red-600">Danger Zone</h3>
-                    <p className="mt-1 mb-3 text-sm text-slate-500">
+                    <p className="mt-1 mb-3 text-sm text-foreground/70">
                       Permanently delete your account and all associated data. This action cannot be undone.
                     </p>
                     <button className="rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 transition-colors">
@@ -508,20 +526,20 @@ export default function SettingsPage() {
           {/* PREFERENCES TAB */}
           {activeTab === "preferences" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-800 mb-6">App Preferences</h2>
+              <div className="rounded-2xl border border-border-theme bg-surface p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-foreground mb-6">App Preferences</h2>
 
                 <div className="space-y-6">
                   {/* Measurement System */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-theme pb-6">
                     <div>
-                      <h3 className="text-sm font-medium text-slate-900">Measurement System</h3>
-                      <p className="mt-1 text-sm text-slate-500">Used for sizing and avatar adjustments.</p>
+                      <h3 className="text-sm font-medium text-foreground">Measurement System</h3>
+                      <p className="mt-1 text-sm text-foreground/70">Used for sizing and avatar adjustments.</p>
                     </div>
                     <select
                       value={measurementSystem}
                       onChange={(e) => setMeasurementSystem(e.target.value as any)}
-                      className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
+                      className="w-full sm:w-auto rounded-lg border border-border-theme bg-surface px-3 py-2 text-sm text-foreground/70 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
                     >
                       <option value="imperial">Imperial (in, lbs)</option>
                       <option value="metric">Metric (cm, kg)</option>
@@ -529,15 +547,15 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Default View */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-theme pb-6">
                     <div>
-                      <h3 className="text-sm font-medium text-slate-900">Default Wardrobe View</h3>
-                      <p className="mt-1 text-sm text-slate-500">Choose which tab opens first in the sidebar.</p>
+                      <h3 className="text-sm font-medium text-foreground">Default Wardrobe View</h3>
+                      <p className="mt-1 text-sm text-foreground/70">Choose which tab opens first in the sidebar.</p>
                     </div>
                     <select
                       value={defaultWardrobeView}
                       onChange={(e) => setDefaultWardrobeView(e.target.value as any)}
-                      className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
+                      className="w-full sm:w-auto rounded-lg border border-border-theme bg-surface px-3 py-2 text-sm text-foreground/70 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
                     >
                       <option value="owned">Owned Clothes</option>
                       <option value="unowned">Wishlist</option>
@@ -548,8 +566,8 @@ export default function SettingsPage() {
                   {/* Camera Behavior */}
                   <div className="flex items-center justify-between gap-4 pt-2">
                     <div>
-                      <h3 className="text-sm font-medium text-slate-900">Camera Permissions</h3>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <h3 className="text-sm font-medium text-foreground">Camera Permissions</h3>
+                      <p className="mt-1 text-sm text-foreground/70">
                         Always ask before turning on the camera in the uploader.
                       </p>
                     </div>
@@ -560,7 +578,7 @@ export default function SettingsPage() {
                         onChange={(e) => setAskBeforeCamera(e.target.checked)}
                         className="peer sr-only"
                       />
-                      <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
+                      <div className="peer h-6 w-11 rounded-full bg-surface-alt after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border-theme after:bg-surface after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
                     </label>
                   </div>
                 </div>
@@ -568,12 +586,51 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {/* APPEARANCE TAB */}
+          {activeTab === "appearance" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="rounded-2xl border border-border-theme bg-surface p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-foreground mb-6">Appearance</h2>
+
+                <div className="space-y-6">
+                  {/* Theme Selector */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-theme pb-6">
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground">Theme</h3>
+                      <p className="mt-1 text-sm text-foreground/70">Customize the visual style of F.AVA AI.</p>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-lg border border-border-theme bg-surface-alt p-1">
+                      {(["light", "dark", "system"] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={async () => {
+                            setTheme(t);
+                            if (user) {
+                              await supabase.from("profiles").update({ theme: t }).eq("id", user.id);
+                            }
+                          }}
+                          className={`rounded-md px-4 py-2 text-sm font-medium capitalize transition-all ${
+                            mounted && theme === t
+                              ? "bg-surface text-brand-forest shadow-sm ring-1 ring-border-theme"
+                              : "text-foreground/70 hover:text-foreground hover:bg-surface-alt"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* FALLBACK FOR UNFINISHED TABS */}
-          {(activeTab === "appearance" || activeTab === "notifications") && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {activeTab === "notifications" && (
+            <div className="rounded-2xl border border-dashed border-border-theme bg-surface p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
               <span className="text-4xl mb-4 block">{tabs.find((t) => t.id === activeTab)?.icon}</span>
-              <h2 className="text-xl font-semibold text-slate-800 capitalize">{activeTab} Settings</h2>
-              <p className="mt-2 text-slate-500">This section is currently under construction.</p>
+              <h2 className="text-xl font-semibold text-foreground capitalize">{activeTab} Settings</h2>
+              <p className="mt-2 text-foreground/70">This section is currently under construction.</p>
             </div>
           )}
         </section>

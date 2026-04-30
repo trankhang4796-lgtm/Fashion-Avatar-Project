@@ -50,7 +50,7 @@ export default function WardrobePageContent() {
   return (
     <main className="relative mx-auto max-w-6xl px-6 py-10">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-        <h1 className="text-3xl font-bold text-slate-900">My Wardrobe</h1>
+        <h1 className="text-3xl font-bold text-foreground">My Wardrobe</h1>
         <button
           type="button"
           onClick={() => setIsAddModalOpen(true)}
@@ -60,19 +60,19 @@ export default function WardrobePageContent() {
         </button>
       </div>
 
-      <p className="mb-8 max-w-2xl text-base text-slate-600">
+      <p className="mb-8 max-w-2xl text-base text-foreground/70">
         This page shows the same clothing inventory used on the Dashboard.
         Add items from either page and they stay in sync.
       </p>
 
       <div className="space-y-8">
-        <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <section className="rounded-2xl border border-border-theme bg-surface-alt p-5">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">
+              <h2 className="text-xl font-semibold text-foreground">
                 Saved items
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-foreground/70">
                 {items.length} item{items.length === 1 ? "" : "s"} in your
                 wardrobe
               </p>
@@ -80,13 +80,13 @@ export default function WardrobePageContent() {
           </div>
 
           {!isLoaded ? (
-            <p className="text-sm text-slate-500">Loading wardrobe...</p>
+            <p className="text-sm text-foreground/70">Loading wardrobe...</p>
           ) : items.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-              <h3 className="text-lg font-semibold text-slate-800">
+            <div className="rounded-2xl border border-dashed border-border-theme bg-surface px-6 py-12 text-center">
+              <h3 className="text-lg font-semibold text-foreground">
                 Your wardrobe is empty
               </h3>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-foreground/70">
                 Click Add Clothing to upload your first clothing image.
               </p>
             </div>
@@ -108,25 +108,25 @@ export default function WardrobePageContent() {
           <button
             type="button"
             aria-label="Close add clothing modal"
-            className="absolute inset-0 bg-slate-900/45 backdrop-blur-[1px]"
+            className="absolute inset-0 bg-foreground/40 backdrop-blur-[1px]"
             onClick={() => setIsAddModalOpen(false)}
           />
 
-          <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-border-theme bg-surface p-5 shadow-2xl">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
               aria-label="Close"
-              className="absolute right-4 top-4 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="absolute right-4 top-4 rounded-md p-1.5 text-foreground/70 transition-colors hover:bg-surface-alt hover:text-foreground"
             >
               ×
             </button>
 
             <div className="pr-10">
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-foreground">
                 Add Clothing
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-foreground/70">
                 Upload from files, drag and drop, or take a photo.
               </p>
             </div>

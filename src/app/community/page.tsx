@@ -124,8 +124,8 @@ export default function CommunityPage() {
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 relative h-[calc(100vh-73px)] flex flex-col overflow-hidden">
       <div className="mb-6 flex flex-col items-center shrink-0">
-        <h1 className="text-3xl font-bold text-slate-900">Community Feed</h1>
-        <p className="mt-2 text-base text-slate-600 mb-6">Discover and search outfits from the F.AVA AI community.</p>
+        <h1 className="text-3xl font-bold text-foreground">Community Feed</h1>
+        <p className="mt-2 text-base text-foreground mb-6">Discover and search outfits from the F.AVA AI community.</p>
 
         <div className="w-full max-w-xl flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -134,14 +134,14 @@ export default function CommunityPage() {
               placeholder="Search outfits by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-5 py-3 pr-10 text-sm shadow-sm focus:border-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
+              className="w-full rounded-xl border border-border-theme bg-surface px-5 py-3 pr-10 text-sm text-foreground shadow-sm focus:border-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
             />
             <span className="absolute right-4 top-3.5 text-slate-400">🔍</span>
           </div>
           <select 
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
+            className="rounded-xl border border-border-theme bg-surface px-4 py-3 text-sm text-foreground shadow-sm focus:border-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -161,45 +161,45 @@ export default function CommunityPage() {
 
       <div className="flex-1 overflow-y-auto pb-10 custom-scrollbar pr-2">
         {loading ? (
-          <p className="text-center text-slate-500 mt-10">Loading community outfits...</p>
+          <p className="text-center text-foreground/70 mt-10">Loading community outfits...</p>
         ) : filteredOutfits.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center mt-10">
-            <h3 className="text-lg font-semibold text-slate-800">No outfits found</h3>
-            <p className="mt-2 text-sm text-slate-600">Try a different search term or be the first to publish an outfit!</p>
+          <div className="rounded-2xl border border-dashed border-border-theme bg-surface px-6 py-16 text-center mt-10">
+            <h3 className="text-lg font-semibold text-foreground">No outfits found</h3>
+            <p className="mt-2 text-sm text-foreground/70">Try a different search term or be the first to publish an outfit!</p>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredOutfits.map((outfit) => (
-                <article key={outfit.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                <article key={outfit.id} className="rounded-2xl border border-border-theme bg-surface p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-semibold text-slate-900 truncate pr-2">{outfit.name}</h3>
-                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full shrink-0">@{outfit.authorName}</span>
+                    <h3 className="font-semibold text-foreground truncate pr-2">{outfit.name}</h3>
+                    <span className="text-xs bg-surface-alt border border-border-theme text-foreground/70 px-2 py-1 rounded-full shrink-0">@{outfit.authorName}</span>
                   </div>
                   
                   {/* Vertically Stacked Images */}
                   <div className="flex flex-col gap-2 mb-4 flex-1">
-                    <div className="relative aspect-[4/3] w-full rounded-xl bg-slate-50 border border-slate-100 overflow-hidden">
+                    <div className="relative aspect-[4/3] w-full rounded-xl bg-surface-alt border border-border-theme overflow-hidden">
                       {outfit.upperWearImage ? (
                         <Image src={outfit.upperWearImage} alt="Upper" fill className="object-contain p-2" unoptimized />
                       ) : (
-                        <span className="flex h-full items-center justify-center text-xs text-slate-400">No Upper</span>
+                        <span className="flex h-full items-center justify-center text-xs text-foreground/60">No Upper</span>
                       )}
                     </div>
-                    <div className="relative aspect-[4/3] w-full rounded-xl bg-slate-50 border border-slate-100 overflow-hidden">
+                    <div className="relative aspect-[4/3] w-full rounded-xl bg-surface-alt border border-border-theme overflow-hidden">
                       {outfit.lowerWearImage ? (
                         <Image src={outfit.lowerWearImage} alt="Lower" fill className="object-contain p-2" unoptimized />
                       ) : (
-                        <span className="flex h-full items-center justify-center text-xs text-slate-400">No Lower</span>
+                        <span className="flex h-full items-center justify-center text-xs text-foreground/60">No Lower</span>
                       )}
                     </div>
                   </div>
 
                   {/* Card Footer: Interactions */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
+                  <div className="pt-3 border-t border-border-theme flex items-center justify-between mt-auto">
                     <button 
                       onClick={() => handleLike(outfit)}
-                      className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${outfit.isLikedByMe ? 'text-red-500' : 'text-slate-500 hover:text-red-500'}`}
+                      className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${outfit.isLikedByMe ? 'text-red-500' : 'text-foreground/70 hover:text-red-500'}`}
                     >
                       <span>{outfit.isLikedByMe ? '❤️' : '🤍'}</span>
                       <span>{outfit.likesCount || 0}</span>
@@ -209,7 +209,7 @@ export default function CommunityPage() {
                     {currentUserId === outfit.userId && (
                       <button 
                         onClick={() => handleTogglePublish(outfit)}
-                        className="text-xs font-medium text-slate-400 hover:text-red-600 transition-colors"
+                        className="text-xs font-medium text-foreground/60 hover:text-red-600 transition-colors"
                       >
                         Remove
                       </button>
@@ -224,7 +224,7 @@ export default function CommunityPage() {
                 <button 
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="rounded-full border border-slate-300 bg-white px-8 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                  className="rounded-full border border-border-theme bg-surface px-8 py-3 text-sm font-semibold text-foreground shadow-sm hover:bg-surface-alt disabled:opacity-50 transition-colors"
                 >
                   {loadingMore ? "Loading..." : "Load More Outfits"}
                 </button>

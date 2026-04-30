@@ -40,7 +40,7 @@ function PreviewTile({
 }) {
   return (
     <div className="flex-1">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border-theme bg-surface-alt">
         {imageSrc ? (
           <Image
             src={imageSrc}
@@ -51,7 +51,7 @@ function PreviewTile({
             className="object-contain p-2"
           />
         ) : (
-          <div className="flex h-full items-center justify-center px-4 text-center text-xs text-slate-400">
+          <div className="flex h-full items-center justify-center px-4 text-center text-xs text-foreground/60">
             No {label}
           </div>
         )}
@@ -62,11 +62,11 @@ function PreviewTile({
 
 export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-2xl border border-border-theme bg-surface text-foreground p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">{outfit.name}</h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <h3 className="text-lg font-semibold text-foreground truncate pr-2">{outfit.name}</h3>
+          <p className="mt-1 text-sm text-foreground/70">
             {formatCreatedAt(outfit.createdAt)}
           </p>
         </div>
@@ -118,8 +118,8 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
         </button>
       </div>
 
-      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="mt-4 rounded-xl border border-border-theme bg-surface-alt p-3">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground/70">
           Outfit Preview
         </p>
         <div className="flex flex-col gap-2">
@@ -137,20 +137,20 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
       </div>
 
       <div className="mt-4 space-y-3">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
             Upper Wear
           </p>
-          <p className="mt-1 text-sm text-slate-700">
+          <p className="mt-1 text-sm text-foreground">
             {getItemSummary(outfit.upperWear, "No upper wear selected")}
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
             Lower Wear
           </p>
-          <p className="mt-1 text-sm text-slate-700">
+          <p className="mt-1 text-sm text-foreground">
             {getItemSummary(outfit.lowerWear, "No lower wear selected")}
           </p>
         </div>

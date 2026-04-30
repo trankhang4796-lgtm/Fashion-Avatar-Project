@@ -28,13 +28,13 @@ export default function DropZone({
       className={`mb-4 flex min-h-48 flex-col items-center justify-center rounded border-2 border-dashed p-5 text-center transition-colors ${
         isDragging
           ? "border-blue-600 bg-blue-50"
-          : "border-gray-200 bg-white hover:bg-gray-50"
+          : "border-border-theme bg-surface hover:bg-surface-alt"
       }`}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
-      <p className="mb-3 text-sm text-slate-600">
+      <p className="mb-3 text-sm text-foreground/70">
         Drag and drop clothing images here
       </p>
 
@@ -52,7 +52,7 @@ export default function DropZone({
         <button
           type="button"
           onClick={onToggleCamera}
-          className="rounded border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          className="rounded border border-border-theme bg-surface-alt px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface"
         >
           {isCameraOpen ? "Close Camera" : "Take Photo"}
         </button>

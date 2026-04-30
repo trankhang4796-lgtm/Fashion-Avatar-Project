@@ -153,7 +153,7 @@ export default function AvatarPreview({
         </div>
       </div>
 
-      <div className="relative w-full flex-1 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="relative w-full flex-1 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
         <div className="relative mx-auto aspect-[3/5] w-full max-w-[360px] p-4">
           {/* Base avatar always visible */}
           <div className="absolute inset-4">

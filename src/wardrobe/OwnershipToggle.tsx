@@ -10,7 +10,7 @@ export default function OwnershipToggle({ value, onChange }: OwnershipToggleProp
     <select
       value={value ? "owned" : "unowned"}
       onChange={(event) => onChange(event.target.value === "owned")}
-      className="w-full rounded-lg border border-slate-200 bg-brand-cream p-2 text-sm text-brand-forest focus:ring-brand-mint"
+      className="w-full rounded-lg border border-border-theme bg-brand-cream p-2 text-sm text-brand-forest focus:ring-brand-mint"
     >
       <option value="owned">Owned</option>
       <option value="unowned">Wishlist/Unowned</option>

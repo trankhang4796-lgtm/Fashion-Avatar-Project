@@ -11,6 +11,7 @@ export default function SignOutButton() {
       console.error("Sign out error:", error);
     } finally {
       // Forcefully clear browser state and return to landing page
+      localStorage.removeItem("theme");
       window.location.href = "/";
     }
   };

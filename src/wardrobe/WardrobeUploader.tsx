@@ -160,12 +160,12 @@ export default function WardrobeUploader({
   };
 
   return (
-    <section className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
+    <section className={`rounded-2xl border border-border-theme bg-surface p-5 shadow-sm ${className}`}>
       {title || description ? (
         <div className="mb-4">
-          {title ? <h2 className="text-lg font-semibold text-slate-900">{title}</h2> : null}
+          {title ? <h2 className="text-lg font-semibold text-foreground">{title}</h2> : null}
           {description ? (
-            <p className="mt-1 text-sm text-slate-600">{description}</p>
+            <p className="mt-1 text-sm text-foreground/70">{description}</p>
           ) : null}
         </div>
       ) : null}
@@ -191,10 +191,10 @@ export default function WardrobeUploader({
       )}
 
       {pendingImage && (
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <h3 className="text-sm font-semibold text-slate-800">Preview</h3>
+        <div className="mt-4 rounded-xl border border-border-theme bg-surface-alt p-4">
+          <h3 className="text-sm font-semibold text-foreground">Preview</h3>
           <div className="mt-3 flex flex-col gap-4 sm:flex-row">
-            <div className="h-32 w-full overflow-hidden rounded-xl border border-slate-200 bg-white sm:w-32">
+            <div className="h-32 w-full overflow-hidden rounded-xl border border-border-theme bg-surface sm:w-32">
               <div className="relative h-full w-full">
                 <Image
                   src={pendingImage.url}
@@ -237,7 +237,7 @@ export default function WardrobeUploader({
                 <button
                   type="button"
                   onClick={() => setPendingImage(null)}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                  className="rounded-lg border border-border-theme px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-alt"
                 >
                   Cancel
                 </button>

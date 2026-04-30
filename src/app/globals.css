@@ -1,21 +1,42 @@
 @import "tailwindcss";
 
+/* 1. Default Light Mode Variables */
 :root {
   --background: #FDFBF7;
   --foreground: #2D4A3E;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --border-theme: #e2e8f0;
+  --brand-cream: #FDFBF7;
+  --brand-forest: #198d46;
+  --brand-mint: #00bb5d;
+  --brand-darkgreen: #1c7247;
 }
 
+/* 2. Dark Mode Override Variables */
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --surface: #1e293b;
+  --surface-alt: #0f172a;
+  --border-theme: #334155;
+  --brand-cream: #1e293b;      /* Slate-800 for Cards/Navbar */
+  --brand-forest: #4ade80;     /* Lighter Emerald for contrast */
+  --brand-mint: #34d399;       /* Bright Mint */
+  --brand-darkgreen: #22c55e;
+}
+
+/* 3. Link Variables to Tailwind v4 Theme */
 @theme inline {
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-forest: var(--brand-forest);
+  --color-brand-mint: var(--brand-mint);
+  --color-brand-darkgreen: var(--brand-darkgreen);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-border-theme: var(--border-theme);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-playfair: var(--font-playfair-display);
-  --font-jakarta: var(--font-jakarta-sans);
-  --color-brand-cream: #FDFBF7;
-  --color-brand-forest: #198d46;
-  --color-brand-mint: #00bb5d;
-  --color-brand-darkgreen: #1c7247;
 }
 
 @layer utilities {

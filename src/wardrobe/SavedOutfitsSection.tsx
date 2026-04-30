@@ -36,20 +36,20 @@ export default function SavedOutfitsSection() {
   }, []);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+    <section className="rounded-2xl border border-border-theme bg-surface-alt p-5">
       <div className="mb-5">
-        <h2 className="text-xl font-semibold text-slate-900">Saved Outfits</h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <h2 className="text-xl font-semibold text-foreground">Saved Outfits</h2>
+        <p className="mt-1 text-sm text-foreground/70">
           Outfits you save from the Dashboard will appear here.
         </p>
       </div>
 
       {savedOutfits.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-          <h3 className="text-lg font-semibold text-slate-800">
+        <div className="rounded-2xl border border-dashed border-border-theme bg-surface px-6 py-12 text-center">
+          <h3 className="text-lg font-semibold text-foreground">
             No saved outfits yet.
           </h3>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-foreground/70">
             Build an outfit on the Dashboard and click Save Outfit to see it
             here.
           </p>

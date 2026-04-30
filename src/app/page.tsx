@@ -43,7 +43,7 @@ export default function LandingPage() {
         <h1 className="font-serif text-5xl text-brand-forest md:text-7xl">
           Generate realistic images of your outfit, imagine how other clothes will look on you.
         </h1>
-        <p className="mx-auto mt-6 max-w-md text-black">
+        <p className="mx-auto mt-6 max-w-md transition-colors">
           F.AVA_AI will help you visualize your own apparel and
           accessories for premium try-on experiences with an extensive wardrobe and avatar feature.
         </p>
@@ -54,7 +54,7 @@ export default function LandingPage() {
         >
           Get started for free
         </Link>
-        <p className="mt-3 text-sm text-slate-500">No credit card or login required.</p>
+        <p className="mt-3 text-sm transition-colors">No credit card or login required.</p>
       </div>
     </main>
   );

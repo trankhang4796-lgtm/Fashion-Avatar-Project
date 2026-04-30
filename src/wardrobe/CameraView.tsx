@@ -17,7 +17,7 @@ export default function CameraView({
 }: CameraViewProps) {
   return (
     <div className="flex flex-1 w-full max-w-md mx-auto flex-col items-center justify-center p-6">
-      <div className="w-full rounded-lg border border-slate-200 bg-white p-3">
+      <div className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
         {/* Displays the live camera feed */}
         <video
           ref={videoRef}

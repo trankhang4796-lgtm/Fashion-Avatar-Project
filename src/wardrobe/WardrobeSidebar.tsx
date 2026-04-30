@@ -129,10 +129,10 @@ export default function WardrobeSidebar({
 
   if (!isOpen) {
     return (
-      <div className="flex h-full items-start justify-center bg-slate-50 p-3">
+      <div className="flex h-full flex-col bg-background p-4">
         <button
           onClick={onToggle}
-          className="h-14 w-14 rounded-lg border border-slate-200 bg-slate-100 text-xl"
+          className="h-14 w-14 rounded-lg border border-border-theme bg-surface text-xl text-foreground shadow-sm hover:bg-surface-alt transition-colors"
         >
           +
         </button>
@@ -141,12 +141,12 @@ export default function WardrobeSidebar({
   }
 
   return (
-    <div className="flex h-full flex-col bg-slate-50 p-4">
+    <div className="flex h-full flex-col bg-surface p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-800">Wardrobe</h2>
+        <h2 className="text-lg font-semibold text-foreground">Wardrobe</h2>
         <button
           onClick={onToggle}
-          className="rounded px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100"
+          className="rounded px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
         >
           Close
         </button>
@@ -198,7 +198,7 @@ export default function WardrobeSidebar({
 
       {activeTab === "outfits" ? (
         savedOutfits.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+          <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
             No saved outfits yet.
           </p>
         ) : (
@@ -206,11 +206,11 @@ export default function WardrobeSidebar({
             {savedOutfits.map((outfit) => (
               <div
                 key={outfit.id}
-                className="rounded-xl border border-slate-200 bg-white p-3"
+                className="rounded-xl border border-border-theme bg-surface p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-800">
+                    <p className="truncate text-sm font-semibold text-foreground">
                       {outfit.name}
                     </p>
                     <div className="mt-3 flex flex-col gap-1 w-16">
@@ -300,7 +300,7 @@ export default function WardrobeSidebar({
       ) : !isLoaded ? (
         <p className="text-sm text-slate-500">Loading wardrobe...</p>
       ) : filteredItems.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+        <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
           No {activeTab === "owned" ? "owned" : "wishlist"} items yet.
         </p>
       ) : (
