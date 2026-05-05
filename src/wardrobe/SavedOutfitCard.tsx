@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWardrobe } from "@/src/context/WardrobeContext";
 import type { SavedOutfit } from "@/src/utils/outfits";
-import { deleteOutfitFromCloud, toggleOutfitPublish } from "@/src/utils/outfits";
+import { deleteOutfitFromCloud, renameOutfitInCloud, toggleOutfitPublish } from "@/src/utils/outfits";
 
 interface SavedOutfitCardProps {
   outfit: SavedOutfit;
@@ -67,12 +67,64 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
   const router = useRouter();
   const { editingOutfit, setEditingOutfit } = useWardrobe();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState(outfit.name);
+  const [isPublishedUI, setIsPublishedUI] = useState(outfit.isPublished);
+
+  useEffect(() => {
+    setNewName(outfit.name);
+  }, [outfit.id, outfit.name]);
+
+  useEffect(() => {
+    setIsPublishedUI(outfit.isPublished);
+  }, [outfit.id, outfit.isPublished]);
 
   return (
     <article className="rounded-2xl border border-border-theme bg-surface text-foreground p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground truncate pr-2">{outfit.name}</h3>
+        <div className="min-w-0 flex-1">
+          {isRenaming ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                autoFocus
+                className="min-w-0 flex-1 rounded-lg border border-border-theme bg-surface px-3 py-2 text-sm text-foreground focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
+                aria-label="Outfit name"
+              />
+              <div className="flex flex-shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await renameOutfitInCloud(outfit.id, newName.trim());
+                      setIsRenaming(false);
+                    } catch (err: unknown) {
+                      const message =
+                        err instanceof Error ? err.message : "Failed to rename outfit.";
+                      alert(message);
+                    }
+                  }}
+                  className="rounded-md border border-brand-mint bg-brand-mint px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-forest"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewName(outfit.name);
+                    setIsRenaming(false);
+                  }}
+                  className="rounded-md border border-border-theme bg-surface px-3 py-1.5 text-xs font-medium text-foreground/70 transition-colors hover:bg-surface-alt"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <h3 className="truncate pr-2 text-lg font-semibold text-foreground">{outfit.name}</h3>
+          )}
           <p className="mt-1 text-sm text-foreground/70">
             {formatCreatedAt(outfit.createdAt)}
           </p>
@@ -103,20 +155,35 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
 
         <button
           type="button"
+          onClick={() => {
+            setNewName(outfit.name);
+            setIsRenaming(true);
+          }}
+          className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-border-theme dark:text-foreground/70 dark:hover:bg-surface-alt"
+        >
+          Rename
+        </button>
+
+        <button
+          type="button"
           onClick={async () => {
+            const previousPublished = outfit.isPublished;
+            const newPublishState = !outfit.isPublished;
+            setIsPublishedUI(newPublishState);
             try {
-              await toggleOutfitPublish(outfit.id, !outfit.isPublished);
+              await toggleOutfitPublish(outfit.id, newPublishState);
             } catch (err: any) {
+              setIsPublishedUI(previousPublished);
               alert(err.message);
             }
           }}
           className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
-            outfit.isPublished
+            isPublishedUI
               ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
               : "border-slate-200 text-slate-600 hover:bg-slate-50"
           }`}
         >
-          {outfit.isPublished ? "Remove from Community" : "Publish to Community"}
+          {isPublishedUI ? "Remove from Community" : "Publish to Community"}
         </button>
 
         <button

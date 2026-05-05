@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
@@ -18,10 +18,27 @@ export default function AccountMenu() {
   const [welcomeMessage, setWelcomeMessage] = useState("");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const handleMouseDown = (event: MouseEvent) => {
+      if (!isOpen) return;
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     let isMounted = true;
@@ -144,7 +161,7 @@ export default function AccountMenu() {
         </span>
 
         {/* Account Button & Dropdown */}
-        <div className="relative">
+        <div ref={dropdownRef} className="relative">
           <button
             type="button"
             onClick={() => setIsOpen((v) => !v)}
@@ -190,6 +207,13 @@ export default function AccountMenu() {
                 className="w-full px-4 py-2 text-left text-sm text-foreground transition-colors hover:bg-surface-alt"
               >
                 Preferences
+              </Link>
+              <Link
+                href="/settings?tab=beta"
+                onClick={() => setIsOpen(false)}
+                className="w-full px-4 py-2 text-left text-sm text-foreground transition-colors hover:bg-surface-alt"
+              >
+                Beta features
               </Link>
               <div className="my-1 h-px w-full bg-border-theme" />
               <SignOutButton />

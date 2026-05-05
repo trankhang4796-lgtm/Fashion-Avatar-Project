@@ -9,6 +9,8 @@ import type { SavedOutfit } from "@/src/utils/outfits";
 import { saveOutfitToCloud, updateOutfitInCloud } from "@/src/utils/outfits";
 import { createClient } from "@/src/utils/supabase/client";
 import UsernameSetupModal from "@/src/components/UsernameSetupModal";
+import { useBetaSettings } from "@/src/hooks/useBetaSettings";
+import { generateAvatar } from "@/src/services/avatarGenerationService";
 
 export default function DashboardPage() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
@@ -17,8 +19,16 @@ export default function DashboardPage() {
   const [saveMessage, setSaveMessage] = useState("");
   const [newlySavedOutfit, setNewlySavedOutfit] = useState<SavedOutfit | null>(null);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedAvatarImage, setGeneratedAvatarImage] = useState<string | null>(
+    null,
+  );
 
-  const { editingOutfit, setEditingOutfit } = useWardrobe();
+  const { editingOutfit, setEditingOutfit, customAvatarUrl } = useWardrobe();
+  const betaSettings = useBetaSettings();
+  const canGenerateAiTryOn =
+    betaSettings.betaFeaturesEnabled &&
+    (betaSettings.betaFastAiGeneration || betaSettings.betaHighAccuracyVto);
 
   useEffect(() => {
     if (editingOutfit) {
@@ -63,6 +73,41 @@ export default function DashboardPage() {
       setSaveMessage(`${savedOutfit.name} saved securely to cloud!`);
     } catch (error: any) {
       setSaveMessage(error.message || "Failed to save outfit.");
+    }
+  };
+
+  const handleGenerateAiTryOn = async () => {
+    if (!upperWear && !lowerWear) {
+      setSaveMessage(
+        "Equip at least one clothing item (upper or lower) before generating.",
+      );
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      setGeneratedAvatarImage(null);
+      setSaveMessage("Generating AI try-on...");
+
+      const payload = {
+        upperWearUrl: upperWear?.url || null,
+        lowerWearUrl: lowerWear?.url || null,
+        customAvatarUrl: customAvatarUrl || null,
+      };
+
+      const result = await generateAvatar(payload, betaSettings);
+      if (typeof result === "string" && result.length > 0) {
+        setGeneratedAvatarImage(result);
+        setSaveMessage("AI try-on generated!");
+      } else {
+        setSaveMessage(
+          "AI generation completed, but no preview image URL was returned.",
+        );
+      }
+    } catch (error: any) {
+      setSaveMessage(error?.message || "Failed to generate AI try-on.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -120,12 +165,23 @@ export default function DashboardPage() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={handleSaveOutfit}
-                className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
-              >
-                Save Outfit
-              </button>
+              <>
+                {canGenerateAiTryOn ? (
+                  <button
+                    onClick={handleGenerateAiTryOn}
+                    disabled={isGenerating}
+                    className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isGenerating ? "Generating..." : "✨ Generate AI Try-On"}
+                  </button>
+                ) : null}
+                <button
+                  onClick={handleSaveOutfit}
+                  className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
+                >
+                  Save Outfit
+                </button>
+              </>
             )}
           </div>
 
@@ -135,6 +191,59 @@ export default function DashboardPage() {
             </p>
           ) : null}
         </div>
+
+        {isGenerating ? (
+          <div className="absolute inset-0 z-20 grid place-items-center bg-foreground/20 backdrop-blur-[1px]">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-border-theme bg-surface px-6 py-5 shadow-xl">
+              <div
+                className="h-10 w-10 animate-spin rounded-full border-4 border-border-theme border-t-brand-forest"
+                aria-label="Generating"
+              />
+              <p className="text-sm font-medium text-foreground/80">
+                Generating AI try-on…
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {generatedAvatarImage ? (
+          <div
+            className="absolute inset-0 z-30 grid place-items-center bg-foreground/40 backdrop-blur-sm p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="AI try-on preview"
+          >
+            <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-border-theme bg-surface shadow-2xl">
+              <div className="flex items-center justify-between gap-4 border-b border-border-theme bg-surface-alt px-5 py-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    AI Try-On Preview
+                  </h2>
+                  <p className="mt-1 text-sm text-foreground/70">
+                    Review the generated result. Close to discard this preview.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGeneratedAvatarImage(null)}
+                  className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-surface-alt"
+                >
+                  Close / Discard
+                </button>
+              </div>
+
+              <div className="p-5">
+                <div className="overflow-hidden rounded-2xl border border-border-theme bg-surface-alt">
+                  <img
+                    src={generatedAvatarImage}
+                    alt="Generated AI try-on"
+                    className="h-[70vh] w-full object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <AvatarCanvas
           upperWear={upperWear}

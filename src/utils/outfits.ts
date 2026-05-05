@@ -315,7 +315,7 @@ export async function updateOutfitInCloud(
   if (error) throw error;
   
   // Trigger UI sync for other tabs/components
-  window.dispatchEvent(new Event("saved-outfits-updated"));
+  window.dispatchEvent(new Event(SAVED_OUTFITS_EVENT));
 
   // Return the newly formatted outfit
   return toSavedOutfit(
@@ -325,6 +325,50 @@ export async function updateOutfitInCloud(
       name: data.name,
       upper_wear: data.upper_wear,
       lower_wear: data.lower_wear,
+      created_at: data.created_at,
+      is_published: data.is_published,
+    },
+    session.user.id,
+  );
+}
+
+export async function renameOutfitInCloud(
+  id: string,
+  newName: string,
+): Promise<SavedOutfit> {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.user) {
+    throw new Error("You must be logged in to rename an outfit.");
+  }
+
+  const trimmedName = newName.trim();
+  if (!trimmedName) {
+    throw new Error("Outfit name cannot be empty.");
+  }
+
+  const { data, error } = await supabase
+    .from("saved_outfits")
+    .update({ name: trimmedName })
+    .eq("id", id)
+    .eq("user_id", session.user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  window.dispatchEvent(new Event(SAVED_OUTFITS_EVENT));
+
+  return toSavedOutfit(
+    {
+      id: data.id,
+      user_id: data.user_id,
+      name: data.name,
+      upper_wear: data.upper_wear as WardrobeItem | null,
+      lower_wear: data.lower_wear as WardrobeItem | null,
       created_at: data.created_at,
       is_published: data.is_published,
     },

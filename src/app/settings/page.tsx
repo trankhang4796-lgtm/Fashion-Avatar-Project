@@ -1,21 +1,28 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { createClient } from "@/src/utils/supabase/client";
 import { deleteUserAccountPermanently } from "@/src/app/actions/auth";
 import { validateUsername, RESTRICTED_WORDS } from "@/src/utils/validation";
 import type { User } from "@supabase/supabase-js";
 
-type SettingsTab = "account" | "privacy" | "appearance" | "notifications" | "preferences";
+type SettingsTab = "account" | "privacy" | "appearance" | "notifications" | "preferences" | "beta";
 
 export default function SettingsPage() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
+  const betaLoadedKeyRef = useRef<string | null>(null);
+
+  const betaSettingsStorageKey = useMemo(() => {
+    const idPart = user?.id ?? "anonymous";
+    return `fashion-avatar:settings:beta:${idPart}`;
+  }, [user?.id]);
 
   // Username State
   const [username, setUsername] = useState("");
@@ -51,20 +58,78 @@ export default function SettingsPage() {
   const [confirmText, setConfirmText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Beta Settings State (persisted locally)
+  const [betaFeaturesEnabled, setBetaFeaturesEnabled] = useState(false);
+  const [betaFastAiGeneration, setBetaFastAiGeneration] = useState(false);
+  const [betaHighAccuracyVto, setBetaHighAccuracyVto] = useState(false);
+  const [betaSettingsLoaded, setBetaSettingsLoaded] = useState(false);
+
   useEffect(() => {
     // Check URL for a specific tab to open (e.g., ?tab=preferences)
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get("tab");
+    const tabParam = searchParams.get("tab");
 
-    const validTabs = ["account", "privacy", "appearance", "notifications", "preferences"];
+    const validTabs = ["account", "privacy", "appearance", "notifications", "preferences", "beta"];
     if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam as SettingsTab);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    betaLoadedKeyRef.current = null;
+    try {
+      const raw = window.localStorage.getItem(betaSettingsStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          enabled?: boolean;
+          fastApi?: boolean;
+          highAccuracyVto?: boolean;
+        };
+
+        const enabled = !!parsed.enabled;
+        const fastApi = enabled ? !!parsed.fastApi : false;
+        const highAccuracyVto = enabled ? !!parsed.highAccuracyVto : false;
+
+        setBetaFeaturesEnabled(enabled);
+        setBetaFastAiGeneration(fastApi && !highAccuracyVto);
+        setBetaHighAccuracyVto(highAccuracyVto && !fastApi);
+      }
+    } catch {
+      // Ignore malformed localStorage values
+    } finally {
+      betaLoadedKeyRef.current = betaSettingsStorageKey;
+      setBetaSettingsLoaded(true);
+    }
+  }, [mounted, betaSettingsStorageKey]);
+
+  useEffect(() => {
+    if (!mounted || !betaSettingsLoaded) return;
+    if (betaLoadedKeyRef.current !== betaSettingsStorageKey) return;
+    try {
+      window.localStorage.setItem(
+        betaSettingsStorageKey,
+        JSON.stringify({
+          enabled: betaFeaturesEnabled,
+          fastApi: betaFeaturesEnabled ? betaFastAiGeneration : false,
+          highAccuracyVto: betaFeaturesEnabled ? betaHighAccuracyVto : false,
+        }),
+      );
+      window.dispatchEvent(new Event("fashion-avatar:beta-settings-changed"));
+    } catch {
+      // Ignore storage quota / blocked storage errors
+    }
+  }, [
+    mounted,
+    betaSettingsLoaded,
+    betaSettingsStorageKey,
+    betaFeaturesEnabled,
+    betaFastAiGeneration,
+    betaHighAccuracyVto,
+  ]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -254,6 +319,7 @@ export default function SettingsPage() {
     { id: "appearance", label: "Appearance", icon: "✨" },
     { id: "notifications", label: "Notifications", icon: "🔔" },
     { id: "preferences", label: "Preferences", icon: "⚙️" },
+    { id: "beta", label: "Beta", icon: "🧪" },
   ];
 
   return (
@@ -630,7 +696,7 @@ export default function SettingsPage() {
                     </div>
                     <select
                       value={measurementSystem}
-                      onChange={(e) => setMeasurementSystem(e.target.value as any)}
+                      onChange={(e) => setMeasurementSystem(e.target.value as "imperial" | "metric")}
                       className="w-full sm:w-auto rounded-lg border border-border-theme bg-surface px-3 py-2 text-sm text-foreground/70 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
                     >
                       <option value="imperial">Imperial (in, lbs)</option>
@@ -646,7 +712,7 @@ export default function SettingsPage() {
                     </div>
                     <select
                       value={defaultWardrobeView}
-                      onChange={(e) => setDefaultWardrobeView(e.target.value as any)}
+                      onChange={(e) => setDefaultWardrobeView(e.target.value as "owned" | "unowned" | "outfits")}
                       className="w-full sm:w-auto rounded-lg border border-border-theme bg-surface px-3 py-2 text-sm text-foreground/70 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
                     >
                       <option value="owned">Owned Clothes</option>
@@ -710,6 +776,103 @@ export default function SettingsPage() {
                           {t}
                         </button>
                       ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BETA TAB (UI ONLY) */}
+          {activeTab === "beta" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="rounded-2xl border border-border-theme bg-surface p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-foreground mb-6">Beta</h2>
+
+                <div className="space-y-6">
+                  {/* Master Toggle */}
+                  <div className="flex items-center justify-between gap-4 border-b border-border-theme pb-6">
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground">Enable Beta Features</h3>
+                      <p className="mt-1 text-sm text-foreground/70">
+                        Turn on experimental features. These may change frequently.
+                      </p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={betaFeaturesEnabled}
+                        onChange={(e) => {
+                          const enabled = e.target.checked;
+                          setBetaFeaturesEnabled(enabled);
+                          if (!enabled) {
+                            setBetaFastAiGeneration(false);
+                            setBetaHighAccuracyVto(false);
+                          }
+                        }}
+                        className="peer sr-only"
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-surface-alt after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border-theme after:bg-surface after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
+                    </label>
+                  </div>
+
+                  {/* Models Section (disabled until master toggle enabled) */}
+                  <div className={betaFeaturesEnabled ? "" : "pointer-events-none opacity-50"}>
+                    <h3 className="text-sm font-semibold text-foreground">Avatar Generation Models</h3>
+                    <p className="mt-1 text-sm text-foreground/70">
+                      Choose which beta model paths are available for avatar generation.
+                    </p>
+
+                    <div className="mt-4 space-y-6 rounded-xl border border-border-theme bg-surface-alt/40 p-5">
+                      <div className="flex items-center justify-between gap-4 border-b border-border-theme/70 pb-6">
+                        <div>
+                          <h4 className="text-sm font-medium text-foreground">Fast AI Generation (API)</h4>
+                          <p className="mt-1 text-sm text-foreground/70">
+                            Faster generation using a hosted API endpoint.
+                          </p>
+                        </div>
+                        <label className="relative inline-flex cursor-pointer items-center">
+                          <input
+                            type="checkbox"
+                            checked={betaFastAiGeneration}
+                            disabled={!betaFeaturesEnabled}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              if (checked) {
+                                setBetaHighAccuracyVto(false);
+                              }
+                              setBetaFastAiGeneration(checked);
+                            }}
+                            className="peer sr-only"
+                          />
+                          <div className="peer h-6 w-11 rounded-full bg-surface-alt after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border-theme after:bg-surface after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
+                        </label>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <h4 className="text-sm font-medium text-foreground">High-Accuracy VTO (Local Network)</h4>
+                          <p className="mt-1 text-sm text-foreground/70">
+                            Higher-quality virtual try-on via a local network service.
+                          </p>
+                        </div>
+                        <label className="relative inline-flex cursor-pointer items-center">
+                          <input
+                            type="checkbox"
+                            checked={betaHighAccuracyVto}
+                            disabled={!betaFeaturesEnabled}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              if (checked) {
+                                setBetaFastAiGeneration(false);
+                              }
+                              setBetaHighAccuracyVto(checked);
+                            }}
+                            className="peer sr-only"
+                          />
+                          <div className="peer h-6 w-11 rounded-full bg-surface-alt after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border-theme after:bg-surface after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>

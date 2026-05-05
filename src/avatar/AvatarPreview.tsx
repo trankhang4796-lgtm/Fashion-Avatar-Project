@@ -3,6 +3,8 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { WardrobeItem } from "@/src/wardrobe/types";
+import { useBetaSettings } from "@/src/hooks/useBetaSettings";
+import { useWardrobe } from "@/src/context/WardrobeContext";
 
 export type AvatarOverlayPlacement = {
   x: number; // px offset from center
@@ -137,6 +139,10 @@ export default function AvatarPreview({
   upperWear: WardrobeItem | null;
   lowerWear: WardrobeItem | null;
 }) {
+  const { customAvatarUrl } = useWardrobe();
+  const { betaFeaturesEnabled, isLoading } = useBetaSettings();
+  const showCustomAvatar = !isLoading && betaFeaturesEnabled && !!customAvatarUrl;
+
   const upperPlacement = getPlacement(upperWear, "upper");
   const lowerPlacement = getPlacement(lowerWear, "lower");
 
@@ -155,9 +161,20 @@ export default function AvatarPreview({
 
       <div className="relative w-full flex-1 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
         <div className="relative mx-auto aspect-[3/5] w-full max-w-[360px] p-4">
-          {/* Base avatar always visible */}
+          {/* Base avatar (custom uploaded avatar when beta-enabled, else default) */}
           <div className="absolute inset-4">
-            <BaseAvatarFigure />
+            {showCustomAvatar ? (
+              <Image
+                src={customAvatarUrl}
+                alt="Custom avatar"
+                fill
+                unoptimized
+                className="object-cover"
+                sizes="360px"
+              />
+            ) : (
+              <BaseAvatarFigure />
+            )}
           </div>
 
           {/* Upper overlay */}

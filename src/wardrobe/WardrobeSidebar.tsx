@@ -8,6 +8,7 @@ import { createClient } from "@/src/utils/supabase/client";
 import {
   deleteOutfitFromCloud,
   getSavedOutfits,
+  renameOutfitInCloud,
   toggleOutfitPublish,
   type SavedOutfit,
 } from "@/src/utils/outfits";
@@ -37,6 +38,8 @@ export default function WardrobeSidebar({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
   const [outfitToDelete, setOutfitToDelete] = useState<SavedOutfit | null>(null);
+  const [renamingOutfitId, setRenamingOutfitId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [, setUploadedImageUrls] = useState<string[]>([]);
@@ -217,10 +220,61 @@ export default function WardrobeSidebar({
                 className="rounded-xl border border-border-theme bg-surface p-3"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {outfit.name}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    {renamingOutfitId === outfit.id ? (
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                        <input
+                          type="text"
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          autoFocus
+                          className="min-w-0 flex-1 rounded-lg border border-border-theme bg-surface px-2 py-1.5 text-sm font-semibold text-foreground focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
+                          aria-label="Outfit name"
+                        />
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const updated = await renameOutfitInCloud(
+                                  outfit.id,
+                                  newName.trim(),
+                                );
+                                setSavedOutfits((prev) =>
+                                  prev.map((o) =>
+                                    o.id === updated.id ? updated : o,
+                                  ),
+                                );
+                                setRenamingOutfitId(null);
+                              } catch (err: unknown) {
+                                const message =
+                                  err instanceof Error
+                                    ? err.message
+                                    : "Failed to rename outfit.";
+                                alert(message);
+                              }
+                            }}
+                            className="rounded-md border border-brand-mint bg-brand-mint px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-brand-forest"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRenamingOutfitId(null);
+                              setNewName("");
+                            }}
+                            className="rounded-md border border-border-theme bg-surface px-2 py-1 text-xs font-medium text-foreground/70 transition-colors hover:bg-surface-alt dark:border-border-theme"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {outfit.name}
+                      </p>
+                    )}
                     <div className="mt-3 flex flex-col gap-1 w-16">
                       {outfit.upperWear?.url ? (
                         <img
@@ -264,6 +318,16 @@ export default function WardrobeSidebar({
                     </button>
                     <button
                       type="button"
+                      onClick={() => {
+                        setRenamingOutfitId(outfit.id);
+                        setNewName(outfit.name);
+                      }}
+                      className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-border-theme dark:text-foreground/70 dark:hover:bg-surface-alt"
+                    >
+                      Rename
+                    </button>
+                    <button
+                      type="button"
                       onClick={() =>
                         onEquipOutfit && onEquipOutfit(outfit.upperWear, outfit.lowerWear)
                       }
@@ -281,9 +345,25 @@ export default function WardrobeSidebar({
                     <button
                       type="button"
                       onClick={async () => {
+                        const previousPublished = outfit.isPublished;
+                        const newPublishState = !outfit.isPublished;
+                        setSavedOutfits((prev) =>
+                          prev.map((o) =>
+                            o.id === outfit.id
+                              ? { ...o, isPublished: newPublishState }
+                              : o,
+                          ),
+                        );
                         try {
-                          await toggleOutfitPublish(outfit.id, !outfit.isPublished);
+                          await toggleOutfitPublish(outfit.id, newPublishState);
                         } catch (err: any) {
+                          setSavedOutfits((prev) =>
+                            prev.map((o) =>
+                              o.id === outfit.id
+                                ? { ...o, isPublished: previousPublished }
+                                : o,
+                            ),
+                          );
                           alert(err.message);
                         }
                       }}
