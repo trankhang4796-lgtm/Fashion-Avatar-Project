@@ -283,7 +283,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         const cloudItems: WardrobeItem[] = (data ?? []).map((row) => ({
           id: row.id as string,
           url: row.image_url as string,
-          type: row.clothing_type as "upper" | "lower",
+          type: row.clothing_type as WardrobeItem["type"],
           isOwned: row.is_owned as boolean,
           createdAt: row.created_at as string,
         }));

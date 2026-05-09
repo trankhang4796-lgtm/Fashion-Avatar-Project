@@ -1,4 +1,4 @@
-export type ClothingType = "upper" | "lower";
+export type ClothingType = "upper" | "lower" | "shoes" | "accessories";
 
 export interface WardrobeItem {
   id: string;

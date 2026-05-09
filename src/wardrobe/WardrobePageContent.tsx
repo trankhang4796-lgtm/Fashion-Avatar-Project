@@ -198,7 +198,7 @@ export default function WardrobePageContent() {
             onClick={() => setIsAddModalOpen(false)}
           />
 
-          <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-border-theme bg-surface p-5 shadow-2xl">
+          <div className="relative z-10 flex w-full max-w-2xl max-h-[calc(100vh-48px)] flex-col overflow-hidden rounded-2xl border border-border-theme bg-surface p-5 shadow-2xl">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}
@@ -218,9 +218,10 @@ export default function WardrobePageContent() {
             </div>
 
             <WardrobeUploader
-              className="mt-4 border-0 bg-transparent p-0 shadow-none"
+              className="mt-4 flex-1 min-h-0 border-0 bg-transparent p-0 shadow-none"
               title=""
               description=""
+              onUploadComplete={() => setIsAddModalOpen(false)}
             />
           </div>
         </div>

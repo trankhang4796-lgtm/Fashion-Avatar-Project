@@ -12,6 +12,13 @@ export default function WardrobeGrid({
   items,
   onRemove,
 }: WardrobeGridProps) {
+  const getLabel = (type: WardrobeItem["type"]) => {
+    if (type === "upper") return "Upper-wear";
+    if (type === "lower") return "Lower-wear";
+    if (type === "shoes") return "Shoes";
+    return "Accessories";
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item, index) => (
@@ -43,7 +50,7 @@ export default function WardrobeGrid({
 
           <div className="p-4">
             <p className="text-sm font-semibold text-foreground">
-              {item.type === "upper" ? "Upper-wear" : "Lower-wear"}
+              {getLabel(item.type)}
             </p>
             <p className="mt-0.5 text-xs text-foreground/70">
               {item.isOwned ? "Owned" : "Wishlist"}
