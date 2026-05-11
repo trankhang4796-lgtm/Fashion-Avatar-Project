@@ -41,6 +41,19 @@ export default function DashboardPage() {
     }
   }, [editingOutfit]);
 
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, []);
+
   const handleSaveOutfit = async () => {
     if (!upperWear || !lowerWear || !shoes) {
       setSaveMessage("Upper, Lower, and Shoes are required to save an outfit.");
@@ -118,10 +131,10 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="relative flex min-h-[calc(100vh-73px)] w-full overflow-hidden">
+    <main className="relative flex h-[calc(100vh-73px)] w-full overflow-hidden">
       {/* Wardrobe – left sliding sidebar */}
       <aside
-        className={`h-full border-r transition-all duration-300 ease-in-out ${
+        className={`h-full min-h-0 shrink-0 border-r transition-all duration-300 ease-in-out ${
           isWardrobeOpen ? "w-1/2 border-border-theme" : "w-20 border-transparent"
         }`}
       >
@@ -139,7 +152,7 @@ export default function DashboardPage() {
       </aside>
 
       {/* Center stage – blank canvas */}
-      <section className="relative flex flex-1 items-center justify-center transition-all duration-300 ease-in-out">
+      <section className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden transition-all duration-300 ease-in-out">
         <div className="absolute right-6 top-6 z-10 flex flex-col items-end gap-2">
           <div className="flex gap-2">
             {editingOutfit ? (

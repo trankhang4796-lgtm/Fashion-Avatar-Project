@@ -9,7 +9,7 @@ interface ImageGridProps {
 
 export default function ImageGrid({ images, onRemove }: ImageGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 overflow-y-auto md:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
       {images.map((item, index) => (
         <div
           key={item.id}

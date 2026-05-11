@@ -145,7 +145,7 @@ export default function WardrobeSidebar({
 
   if (!isOpen) {
     return (
-      <div className="flex h-full flex-col bg-background p-4">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background p-4">
         <button
           onClick={onToggle}
           className="h-14 w-14 rounded-lg border border-border-theme bg-surface text-xl text-foreground shadow-sm hover:bg-surface-alt transition-colors"
@@ -157,8 +157,8 @@ export default function WardrobeSidebar({
   }
 
   return (
-    <div className="flex h-full flex-col bg-surface p-4">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-surface p-4">
+      <div className="mb-4 flex shrink-0 items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Wardrobe</h2>
         <button
           onClick={onToggle}
@@ -171,12 +171,12 @@ export default function WardrobeSidebar({
       <button
         type="button"
         onClick={() => setIsAddModalOpen(true)}
-        className="mb-4 w-full rounded-lg bg-brand-forest px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-darkgreen"
+        className="mb-4 w-full shrink-0 rounded-lg bg-brand-forest px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-darkgreen"
       >
         Add Clothing
       </button>
 
-      <div className="mb-3 flex gap-4 border-b border-slate-200">
+      <div className="mb-3 flex shrink-0 gap-4 border-b border-slate-200">
         <button
           type="button"
           onClick={() => setActiveTab("owned")}
@@ -212,18 +212,19 @@ export default function WardrobeSidebar({
         </button>
       </div>
 
-      {activeTab === "outfits" ? (
-        savedOutfits.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
-            No saved outfits yet.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {savedOutfits.map((outfit) => (
-              <div
-                key={outfit.id}
-                className="rounded-xl border border-border-theme bg-surface p-3"
-              >
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {activeTab === "outfits" ? (
+          savedOutfits.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
+              No saved outfits yet.
+            </p>
+          ) : (
+            <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+              {savedOutfits.map((outfit) => (
+                <div
+                  key={outfit.id}
+                  className="rounded-xl border border-border-theme bg-surface p-3"
+                >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     {renamingOutfitId === outfit.id ? (
@@ -410,23 +411,26 @@ export default function WardrobeSidebar({
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
+          )
+        ) : !isLoaded ? (
+          <p className="text-sm text-slate-500">Loading wardrobe...</p>
+        ) : filteredItems.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
+            No {activeTab === "owned" ? "owned" : "wishlist"} items yet.
+          </p>
+        ) : (
+          <div className="h-full min-h-0 overflow-y-auto pr-1">
+            <ImageGrid
+              key={user?.id ?? "guest"}
+              images={filteredItems}
+              onRemove={handleRemoveItem}
+            />
           </div>
-        )
-      ) : !isLoaded ? (
-        <p className="text-sm text-slate-500">Loading wardrobe...</p>
-      ) : filteredItems.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
-          No {activeTab === "owned" ? "owned" : "wishlist"} items yet.
-        </p>
-      ) : (
-        <ImageGrid
-          key={user?.id ?? "guest"}
-          images={filteredItems}
-          onRemove={handleRemoveItem}
-        />
-      )}
+        )}
+      </div>
 
       {isAddModalOpen ? (
         <div
