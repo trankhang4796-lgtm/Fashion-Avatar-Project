@@ -38,6 +38,16 @@ function guestCustomAvatarStorageKey() {
   return "fashion-avatar-custom-avatar-guest";
 }
 
+function normalizeClothingType(
+  value: unknown,
+): WardrobeItem["type"] {
+  if (value === "upper" || value === "upper-wear") return "upper";
+  if (value === "lower" || value === "lower-wear") return "lower";
+  if (value === "shoes" || value === "shoe") return "shoes";
+  if (value === "accessories" || value === "accessory") return "accessories";
+  return "upper";
+}
+
 const WardrobeContext = createContext<WardrobeContextValue | undefined>(
   undefined,
 );
@@ -196,7 +206,8 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         );
       } catch (error) {
         console.error("Cloud upload failed:", error);
-        setItems((current) => current.filter((i) => i.id !== tempId));
+        // Keep the optimistic local item so new categories remain usable
+        // even when a backend schema is still catching up.
       }
     }
   };
@@ -283,7 +294,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         const cloudItems: WardrobeItem[] = (data ?? []).map((row) => ({
           id: row.id as string,
           url: row.image_url as string,
-          type: row.clothing_type as WardrobeItem["type"],
+          type: normalizeClothingType(row.clothing_type),
           isOwned: row.is_owned as boolean,
           createdAt: row.created_at as string,
         }));

@@ -16,6 +16,8 @@ export default function DashboardPage() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
   const [upperWear, setUpperWear] = useState<WardrobeItem | null>(null);
   const [lowerWear, setLowerWear] = useState<WardrobeItem | null>(null);
+  const [shoes, setShoes] = useState<WardrobeItem | null>(null);
+  const [accessories, setAccessories] = useState<WardrobeItem[]>([]);
   const [saveMessage, setSaveMessage] = useState("");
   const [newlySavedOutfit, setNewlySavedOutfit] = useState<SavedOutfit | null>(null);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
@@ -34,12 +36,14 @@ export default function DashboardPage() {
     if (editingOutfit) {
       setUpperWear(editingOutfit.upperWear);
       setLowerWear(editingOutfit.lowerWear);
+      setShoes(editingOutfit.shoes ?? null);
+      setAccessories(editingOutfit.accessories ?? []);
     }
   }, [editingOutfit]);
 
   const handleSaveOutfit = async () => {
-    if (!upperWear && !lowerWear) {
-      setSaveMessage("Add an upper or lower clothing item before saving.");
+    if (!upperWear || !lowerWear || !shoes) {
+      setSaveMessage("Upper, Lower, and Shoes are required to save an outfit.");
       return;
     }
 
@@ -67,6 +71,8 @@ export default function DashboardPage() {
       const savedOutfit = await saveOutfitToCloud({
         upperWear,
         lowerWear,
+        shoes,
+        accessories,
       });
       setNewlySavedOutfit(savedOutfit);
 
@@ -122,9 +128,11 @@ export default function DashboardPage() {
         <WardrobeSidebar
           isOpen={isWardrobeOpen}
           onToggle={() => setIsWardrobeOpen((prev) => !prev)}
-          onEquipOutfit={(upper, lower) => {
+          onEquipOutfit={(upper, lower, nextShoes, nextAccessories) => {
             setUpperWear(upper);
             setLowerWear(lower);
+            setShoes(nextShoes);
+            setAccessories(nextAccessories);
           }}
           newlySavedOutfit={newlySavedOutfit}
         />
@@ -140,7 +148,13 @@ export default function DashboardPage() {
                   onClick={async () => {
                     try {
                       setSaveMessage("Updating...");
-                      const updatedOutfit = await updateOutfitInCloud(editingOutfit.id, upperWear, lowerWear);
+                      const updatedOutfit = await updateOutfitInCloud(
+                        editingOutfit.id,
+                        upperWear,
+                        lowerWear,
+                        shoes,
+                        accessories,
+                      );
                       setNewlySavedOutfit(updatedOutfit); // This sends the updated data instantly to the sidebar!
                       setSaveMessage("Outfit updated!");
                       setEditingOutfit(null); // Exit edit mode
@@ -157,6 +171,8 @@ export default function DashboardPage() {
                     setEditingOutfit(null);
                     setUpperWear(null);
                     setLowerWear(null);
+                    setShoes(null);
+                    setAccessories([]);
                     setSaveMessage("Discarded changes.");
                   }}
                   className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/70 shadow-sm hover:bg-surface-alt"
@@ -177,6 +193,7 @@ export default function DashboardPage() {
                 ) : null}
                 <button
                   onClick={handleSaveOutfit}
+                  disabled={!upperWear || !lowerWear || !shoes}
                   className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
                 >
                   Save Outfit
@@ -248,8 +265,12 @@ export default function DashboardPage() {
         <AvatarCanvas
           upperWear={upperWear}
           lowerWear={lowerWear}
+          shoes={shoes}
+          accessories={accessories}
           onUpperWearChange={setUpperWear}
           onLowerWearChange={setLowerWear}
+          onShoesChange={setShoes}
+          onAccessoriesChange={setAccessories}
         />
       </section>
 

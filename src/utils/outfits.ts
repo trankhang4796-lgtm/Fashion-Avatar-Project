@@ -8,8 +8,12 @@ export interface SavedOutfit {
   name: string;
   upperWear: WardrobeItem | null;
   lowerWear: WardrobeItem | null;
+  shoes: WardrobeItem | null;
+  accessories: WardrobeItem[];
   upperWearImage: string | null;
   lowerWearImage: string | null;
+  shoesImage: string | null;
+  accessoryImages: string[];
   createdAt: string;
   isFavorite: boolean;
   isPublished?: boolean;
@@ -28,6 +32,12 @@ function getWardrobeItemImage(item: WardrobeItem | null | undefined) {
 function toSavedOutfit(row: any, currentUserId?: string): SavedOutfit {
   const upperWear = row.upper_wear;
   const lowerWear = row.lower_wear;
+  const shoes = row.shoes ?? row.shoes_wear ?? null;
+  const accessories = Array.isArray(row.accessories)
+    ? row.accessories
+    : Array.isArray(row.accessory_items)
+      ? row.accessory_items
+      : [];
 
   const likes = row.outfit_likes || [];
   const isLikedByMe = currentUserId ? likes.some((like: any) => like.user_id === currentUserId) : false;
@@ -38,8 +48,14 @@ function toSavedOutfit(row: any, currentUserId?: string): SavedOutfit {
     name: row.name,
     upperWear,
     lowerWear,
+    shoes,
+    accessories,
     upperWearImage: getWardrobeItemImage(upperWear),
     lowerWearImage: getWardrobeItemImage(lowerWear),
+    shoesImage: getWardrobeItemImage(shoes),
+    accessoryImages: accessories
+      .map((item) => getWardrobeItemImage(item))
+      .filter((image): image is string => Boolean(image)),
     createdAt: row.created_at,
     isFavorite: false,
     isPublished: row.is_published || false,
@@ -87,9 +103,13 @@ export async function getSavedOutfits(): Promise<SavedOutfit[]> {
 export async function saveOutfitToCloud({
   upperWear,
   lowerWear,
+  shoes,
+  accessories,
 }: {
   upperWear: WardrobeItem | null;
   lowerWear: WardrobeItem | null;
+  shoes: WardrobeItem | null;
+  accessories: WardrobeItem[];
 }): Promise<SavedOutfit> {
   const supabase = createClient();
   const {
@@ -110,6 +130,8 @@ export async function saveOutfitToCloud({
       name: outfitName,
       upper_wear: upperWear,
       lower_wear: lowerWear,
+      shoes,
+      accessories,
     })
     .select()
     .single();
@@ -122,6 +144,8 @@ export async function saveOutfitToCloud({
     name: data.name,
     upper_wear: data.upper_wear as WardrobeItem | null,
     lower_wear: data.lower_wear as WardrobeItem | null,
+    shoes: (data as any).shoes as WardrobeItem | null,
+    accessories: ((data as any).accessories ?? []) as WardrobeItem[],
     created_at: data.created_at,
     is_published: data.is_published,
   }, session.user.id);
@@ -142,7 +166,7 @@ export async function deleteOutfitFromCloud(id: string) {
 
   const { data: outfitRow, error: outfitFetchError } = await supabase
     .from("saved_outfits")
-    .select("upper_wear, lower_wear")
+    .select("upper_wear, lower_wear, shoes, accessories")
     .eq("id", id)
     .single();
 
@@ -151,6 +175,12 @@ export async function deleteOutfitFromCloud(id: string) {
   } else {
     const upperWearUrl: string | undefined = outfitRow?.upper_wear?.url;
     const lowerWearUrl: string | undefined = outfitRow?.lower_wear?.url;
+    const shoesUrl: string | undefined = outfitRow?.shoes?.url;
+    const accessoryUrls: string[] = Array.isArray(outfitRow?.accessories)
+      ? outfitRow.accessories
+          .map((item: WardrobeItem | null) => item?.url)
+          .filter((url: string | undefined): url is string => Boolean(url))
+      : [];
 
     const deleteStorageFile = async (itemUrl: string | undefined) => {
       if (!itemUrl) return;
@@ -166,6 +196,10 @@ export async function deleteOutfitFromCloud(id: string) {
 
     await deleteStorageFile(upperWearUrl);
     await deleteStorageFile(lowerWearUrl);
+    await deleteStorageFile(shoesUrl);
+    for (const accessoryUrl of accessoryUrls) {
+      await deleteStorageFile(accessoryUrl);
+    }
   }
 
   const { error } = await supabase.from("saved_outfits").delete().eq("id", id);
@@ -294,6 +328,8 @@ export async function updateOutfitInCloud(
   id: string,
   upperWear: WardrobeItem | null,
   lowerWear: WardrobeItem | null,
+  shoes: WardrobeItem | null,
+  accessories: WardrobeItem[],
 ): Promise<SavedOutfit> {
   const supabase = createClient();
   const {
@@ -307,6 +343,8 @@ export async function updateOutfitInCloud(
     .update({
       upper_wear: upperWear,
       lower_wear: lowerWear,
+      shoes,
+      accessories,
     })
     .eq("id", id)
     .select()
@@ -325,6 +363,8 @@ export async function updateOutfitInCloud(
       name: data.name,
       upper_wear: data.upper_wear,
       lower_wear: data.lower_wear,
+      shoes: (data as any).shoes,
+      accessories: (data as any).accessories ?? [],
       created_at: data.created_at,
       is_published: data.is_published,
     },
@@ -369,6 +409,8 @@ export async function renameOutfitInCloud(
       name: data.name,
       upper_wear: data.upper_wear as WardrobeItem | null,
       lower_wear: data.lower_wear as WardrobeItem | null,
+      shoes: (data as any).shoes as WardrobeItem | null,
+      accessories: ((data as any).accessories ?? []) as WardrobeItem[],
       created_at: data.created_at,
       is_published: data.is_published,
     },

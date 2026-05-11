@@ -21,7 +21,12 @@ export type { WardrobeItem as ClothingItem } from "./types";
 interface WardrobeSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
-  onEquipOutfit?: (upper: WardrobeItem | null, lower: WardrobeItem | null) => void;
+  onEquipOutfit?: (
+    upper: WardrobeItem | null,
+    lower: WardrobeItem | null,
+    shoes: WardrobeItem | null,
+    accessories: WardrobeItem[],
+  ) => void;
   newlySavedOutfit?: SavedOutfit | null;
 }
 
@@ -275,7 +280,7 @@ export default function WardrobeSidebar({
                         {outfit.name}
                       </p>
                     )}
-                    <div className="mt-3 flex flex-col gap-1 w-16">
+                    <div className="mt-3 grid grid-cols-2 gap-1 w-[132px]">
                       {outfit.upperWear?.url ? (
                         <img
                           src={outfit.upperWear.url}
@@ -297,6 +302,28 @@ export default function WardrobeSidebar({
                       ) : (
                         <div className="flex h-16 w-16 items-center justify-center rounded-md border border-slate-100 bg-slate-50 text-[10px] text-slate-400">
                           No Btm
+                        </div>
+                      )}
+                      {outfit.shoes?.url ? (
+                        <img
+                          src={outfit.shoes.url}
+                          alt={`${outfit.name} shoes`}
+                          className="h-16 w-16 rounded-md border border-slate-100 bg-slate-50 object-cover p-1"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-md border border-slate-100 bg-slate-50 text-[10px] text-slate-400">
+                          No Shoe
+                        </div>
+                      )}
+                      {outfit.accessories?.[0]?.url ? (
+                        <img
+                          src={outfit.accessories[0].url}
+                          alt={`${outfit.name} accessory`}
+                          className="h-16 w-16 rounded-md border border-slate-100 bg-slate-50 object-cover p-1"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-md border border-slate-100 bg-slate-50 text-[10px] text-slate-400">
+                          No Acc
                         </div>
                       )}
                     </div>
@@ -329,7 +356,13 @@ export default function WardrobeSidebar({
                     <button
                       type="button"
                       onClick={() =>
-                        onEquipOutfit && onEquipOutfit(outfit.upperWear, outfit.lowerWear)
+                        onEquipOutfit &&
+                        onEquipOutfit(
+                          outfit.upperWear,
+                          outfit.lowerWear,
+                          outfit.shoes ?? null,
+                          outfit.accessories ?? [],
+                        )
                       }
                       className="rounded-lg bg-brand-mint px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-forest"
                     >

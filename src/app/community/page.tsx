@@ -193,6 +193,27 @@ export default function CommunityPage() {
                         <span className="flex h-full items-center justify-center text-xs text-foreground/60">No Lower</span>
                       )}
                     </div>
+                    <div className="relative aspect-[4/3] w-full rounded-xl bg-surface-alt border border-border-theme overflow-hidden">
+                      {outfit.shoesImage ? (
+                        <Image src={outfit.shoesImage} alt="Shoes" fill className="object-contain p-2" unoptimized />
+                      ) : (
+                        <span className="flex h-full items-center justify-center text-xs text-foreground/60">No Shoes</span>
+                      )}
+                    </div>
+                    <div className="rounded-xl bg-surface-alt border border-border-theme p-2">
+                      <p className="text-[10px] font-semibold uppercase text-foreground/60 mb-1">Accessories</p>
+                      {outfit.accessoryImages.length === 0 ? (
+                        <span className="text-xs text-foreground/60">None</span>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-1">
+                          {outfit.accessoryImages.slice(0, 4).map((image, index) => (
+                            <div key={`${outfit.id}-community-accessory-${index}`} className="relative aspect-square overflow-hidden rounded border border-border-theme bg-surface">
+                              <Image src={image} alt={`Accessory ${index + 1}`} fill className="object-contain p-1" unoptimized />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Card Footer: Interactions */}

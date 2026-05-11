@@ -22,7 +22,7 @@ function formatCreatedAt(createdAt: string) {
 }
 
 function getItemSummary(
-  item: SavedOutfit["upperWear"] | SavedOutfit["lowerWear"],
+  item: SavedOutfit["upperWear"] | SavedOutfit["lowerWear"] | SavedOutfit["shoes"],
   emptyLabel: string,
 ) {
   if (!item) {
@@ -210,6 +210,37 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
             alt={`${outfit.name} lower wear`}
             label="Lower"
           />
+          <PreviewTile
+            imageSrc={outfit.shoesImage}
+            alt={`${outfit.name} shoes`}
+            label="Shoes"
+          />
+          <div className="rounded-xl border border-border-theme bg-surface p-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/60">
+              Accessories
+            </p>
+            {outfit.accessoryImages.length === 0 ? (
+              <p className="mt-2 text-xs text-foreground/60">No accessories</p>
+            ) : (
+              <div className="mt-2 grid grid-cols-4 gap-2">
+                {outfit.accessoryImages.slice(0, 8).map((image, index) => (
+                  <div
+                    key={`${outfit.id}-accessory-${index}`}
+                    className="relative aspect-square overflow-hidden rounded-md border border-border-theme bg-surface-alt"
+                  >
+                    <Image
+                      src={image}
+                      alt={`${outfit.name} accessory ${index + 1}`}
+                      fill
+                      unoptimized
+                      sizes="64px"
+                      className="object-contain p-1"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -229,6 +260,26 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
           </p>
           <p className="mt-1 text-sm text-foreground">
             {getItemSummary(outfit.lowerWear, "No lower wear selected")}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
+            Shoes
+          </p>
+          <p className="mt-1 text-sm text-foreground">
+            {getItemSummary(outfit.shoes, "No shoes selected")}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
+            Accessories
+          </p>
+          <p className="mt-1 text-sm text-foreground">
+            {outfit.accessories.length > 0
+              ? `${outfit.accessories.length} accessory item${outfit.accessories.length === 1 ? "" : "s"}`
+              : "No accessories selected"}
           </p>
         </div>
       </div>
