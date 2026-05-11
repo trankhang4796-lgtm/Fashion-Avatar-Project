@@ -21,17 +21,6 @@ function formatCreatedAt(createdAt: string) {
   return date.toLocaleString();
 }
 
-function getItemSummary(
-  item: SavedOutfit["upperWear"] | SavedOutfit["lowerWear"] | SavedOutfit["shoes"],
-  emptyLabel: string,
-) {
-  if (!item) {
-    return emptyLabel;
-  }
-
-  return `${item.isOwned ? "Owned" : "Wishlist"} item`;
-}
-
 function PreviewTile({
   imageSrc,
   alt,
@@ -42,23 +31,21 @@ function PreviewTile({
   label: string;
 }) {
   return (
-    <div className="flex-1">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border-theme bg-surface-alt">
-        {imageSrc ? (
-          <Image
-            src={imageSrc}
-            alt={alt}
-            fill
-            unoptimized
-            sizes="(max-width: 768px) 50vw, 180px"
-            className="object-contain p-2"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center px-4 text-center text-xs text-foreground/60">
-            No {label}
-          </div>
-        )}
-      </div>
+    <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border-theme bg-surface">
+      {imageSrc ? (
+        <Image
+          src={imageSrc}
+          alt={alt}
+          fill
+          unoptimized
+          sizes="(max-width: 768px) 50vw, 180px"
+          className="object-contain p-2"
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center px-3 text-center text-xs text-foreground/60">
+          No {label}
+        </div>
+      )}
     </div>
   );
 }
@@ -78,6 +65,8 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
   useEffect(() => {
     setIsPublishedUI(outfit.isPublished);
   }, [outfit.id, outfit.isPublished]);
+
+  const accessoryImages = outfit.accessoryImages ?? [];
 
   return (
     <article className="rounded-2xl border border-border-theme bg-surface text-foreground p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
@@ -199,7 +188,7 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground/70">
           Outfit Preview
         </p>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <PreviewTile
             imageSrc={outfit.upperWearImage}
             alt={`${outfit.name} upper wear`}
@@ -215,15 +204,12 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
             alt={`${outfit.name} shoes`}
             label="Shoes"
           />
-          <div className="rounded-xl border border-border-theme bg-surface p-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/60">
-              Accessories
-            </p>
-            {outfit.accessoryImages.length === 0 ? (
-              <p className="mt-2 text-xs text-foreground/60">No accessories</p>
+          <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl border border-border-theme bg-surface p-2">
+            {accessoryImages.length === 0 ? (
+              <p className="px-3 text-center text-xs text-foreground/60">No Accessories</p>
             ) : (
-              <div className="mt-2 grid grid-cols-4 gap-2">
-                {outfit.accessoryImages.slice(0, 8).map((image, index) => (
+              <div className="grid w-full grid-cols-2 gap-2">
+                {accessoryImages.slice(0, 4).map((image, index) => (
                   <div
                     key={`${outfit.id}-accessory-${index}`}
                     className="relative aspect-square overflow-hidden rounded-md border border-border-theme bg-surface-alt"
@@ -241,46 +227,6 @@ export default function SavedOutfitCard({ outfit }: SavedOutfitCardProps) {
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
-            Upper Wear
-          </p>
-          <p className="mt-1 text-sm text-foreground">
-            {getItemSummary(outfit.upperWear, "No upper wear selected")}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
-            Lower Wear
-          </p>
-          <p className="mt-1 text-sm text-foreground">
-            {getItemSummary(outfit.lowerWear, "No lower wear selected")}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
-            Shoes
-          </p>
-          <p className="mt-1 text-sm text-foreground">
-            {getItemSummary(outfit.shoes, "No shoes selected")}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border-theme bg-surface-alt p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
-            Accessories
-          </p>
-          <p className="mt-1 text-sm text-foreground">
-            {outfit.accessories.length > 0
-              ? `${outfit.accessories.length} accessory item${outfit.accessories.length === 1 ? "" : "s"}`
-              : "No accessories selected"}
-          </p>
         </div>
       </div>
 
