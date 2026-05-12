@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { createClient } from "@/src/utils/supabase/client";
@@ -10,7 +10,7 @@ import type { User } from "@supabase/supabase-js";
 
 type SettingsTab = "account" | "privacy" | "appearance" | "notifications" | "preferences" | "beta";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -61,7 +61,6 @@ export default function SettingsPage() {
   // Beta Settings State (persisted locally)
   const [betaFeaturesEnabled, setBetaFeaturesEnabled] = useState(false);
   const [betaFastAiGeneration, setBetaFastAiGeneration] = useState(false);
-  const [betaHighAccuracyVto, setBetaHighAccuracyVto] = useState(false);
   const [betaSettingsLoaded, setBetaSettingsLoaded] = useState(false);
 
   useEffect(() => {
@@ -87,16 +86,13 @@ export default function SettingsPage() {
         const parsed = JSON.parse(raw) as {
           enabled?: boolean;
           fastApi?: boolean;
-          highAccuracyVto?: boolean;
         };
 
         const enabled = !!parsed.enabled;
         const fastApi = enabled ? !!parsed.fastApi : false;
-        const highAccuracyVto = enabled ? !!parsed.highAccuracyVto : false;
 
         setBetaFeaturesEnabled(enabled);
-        setBetaFastAiGeneration(fastApi && !highAccuracyVto);
-        setBetaHighAccuracyVto(highAccuracyVto && !fastApi);
+        setBetaFastAiGeneration(fastApi);
       }
     } catch {
       // Ignore malformed localStorage values
@@ -115,7 +111,6 @@ export default function SettingsPage() {
         JSON.stringify({
           enabled: betaFeaturesEnabled,
           fastApi: betaFeaturesEnabled ? betaFastAiGeneration : false,
-          highAccuracyVto: betaFeaturesEnabled ? betaHighAccuracyVto : false,
         }),
       );
       window.dispatchEvent(new Event("fashion-avatar:beta-settings-changed"));
@@ -128,7 +123,6 @@ export default function SettingsPage() {
     betaSettingsStorageKey,
     betaFeaturesEnabled,
     betaFastAiGeneration,
-    betaHighAccuracyVto,
   ]);
 
   useEffect(() => {
@@ -807,7 +801,6 @@ export default function SettingsPage() {
                           setBetaFeaturesEnabled(enabled);
                           if (!enabled) {
                             setBetaFastAiGeneration(false);
-                            setBetaHighAccuracyVto(false);
                           }
                         }}
                         className="peer sr-only"
@@ -824,7 +817,7 @@ export default function SettingsPage() {
                     </p>
 
                     <div className="mt-4 space-y-6 rounded-xl border border-border-theme bg-surface-alt/40 p-5">
-                      <div className="flex items-center justify-between gap-4 border-b border-border-theme/70 pb-6">
+                      <div className="flex items-center justify-between gap-4">
                         <div>
                           <h4 className="text-sm font-medium text-foreground">Fast AI Generation (API)</h4>
                           <p className="mt-1 text-sm text-foreground/70">
@@ -837,36 +830,7 @@ export default function SettingsPage() {
                             checked={betaFastAiGeneration}
                             disabled={!betaFeaturesEnabled}
                             onChange={(e) => {
-                              const checked = e.target.checked;
-                              if (checked) {
-                                setBetaHighAccuracyVto(false);
-                              }
-                              setBetaFastAiGeneration(checked);
-                            }}
-                            className="peer sr-only"
-                          />
-                          <div className="peer h-6 w-11 rounded-full bg-surface-alt after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border-theme after:bg-surface after:transition-all after:content-[''] peer-checked:bg-brand-mint peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-mint/50"></div>
-                        </label>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground">High-Accuracy VTO (Local Network)</h4>
-                          <p className="mt-1 text-sm text-foreground/70">
-                            Higher-quality virtual try-on via a local network service.
-                          </p>
-                        </div>
-                        <label className="relative inline-flex cursor-pointer items-center">
-                          <input
-                            type="checkbox"
-                            checked={betaHighAccuracyVto}
-                            disabled={!betaFeaturesEnabled}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              if (checked) {
-                                setBetaFastAiGeneration(false);
-                              }
-                              setBetaHighAccuracyVto(checked);
+                              setBetaFastAiGeneration(e.target.checked);
                             }}
                             className="peer sr-only"
                           />
@@ -891,6 +855,18 @@ export default function SettingsPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto max-w-5xl px-6 py-10">Loading settings...</main>
+      }
+    >
+      <SettingsContent />
+    </Suspense>
   );
 }
 

@@ -4,7 +4,6 @@ import { createClient } from "@/src/utils/supabase/client";
 type BetaSettings = {
   betaFeaturesEnabled: boolean;
   betaFastAiGeneration: boolean;
-  betaHighAccuracyVto: boolean;
 };
 
 export type UseBetaSettingsResult = BetaSettings & { isLoading: boolean };
@@ -16,7 +15,6 @@ function parseBetaSettings(raw: string | null): BetaSettings {
     return {
       betaFeaturesEnabled: false,
       betaFastAiGeneration: false,
-      betaHighAccuracyVto: false,
     };
   }
 
@@ -24,24 +22,19 @@ function parseBetaSettings(raw: string | null): BetaSettings {
     const parsed = JSON.parse(raw) as {
       enabled?: boolean;
       fastApi?: boolean;
-      highAccuracyVto?: boolean;
     };
 
     const enabled = !!parsed.enabled;
     const fastApi = enabled ? !!parsed.fastApi : false;
-    const highAccuracyVto = enabled ? !!parsed.highAccuracyVto : false;
 
-    // Enforce mutual exclusion even if storage was edited manually.
     return {
       betaFeaturesEnabled: enabled,
-      betaFastAiGeneration: fastApi && !highAccuracyVto,
-      betaHighAccuracyVto: highAccuracyVto && !fastApi,
+      betaFastAiGeneration: fastApi,
     };
   } catch {
     return {
       betaFeaturesEnabled: false,
       betaFastAiGeneration: false,
-      betaHighAccuracyVto: false,
     };
   }
 }

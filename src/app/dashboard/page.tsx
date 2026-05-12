@@ -29,8 +29,7 @@ export default function DashboardPage() {
   const { editingOutfit, setEditingOutfit, customAvatarUrl } = useWardrobe();
   const betaSettings = useBetaSettings();
   const canGenerateAiTryOn =
-    betaSettings.betaFeaturesEnabled &&
-    (betaSettings.betaFastAiGeneration || betaSettings.betaHighAccuracyVto);
+    betaSettings.betaFeaturesEnabled && betaSettings.betaFastAiGeneration;
 
   useEffect(() => {
     if (editingOutfit) {

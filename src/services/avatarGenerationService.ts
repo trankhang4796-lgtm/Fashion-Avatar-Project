@@ -1,7 +1,6 @@
 export type BetaAvatarGenerationSettings = {
   betaFeaturesEnabled: boolean;
   betaFastAiGeneration: boolean;
-  betaHighAccuracyVto: boolean;
 };
 
 export class BetaAvatarGenerationError extends Error {
@@ -22,8 +21,6 @@ export class BetaAvatarGenerationError extends Error {
     this.code = code;
   }
 }
-
-type ImagePayload = unknown;
 
 export type GenerateAvatarImagePayload = {
   upperWearUrl: string | null;
@@ -61,14 +58,6 @@ export async function generateAvatarFastAPI(imagePayload: ImagePayload) {
   return data.generatedUrl;
 }
 
-export async function generateAvatarLocalVTO(imagePayload: ImagePayload) {
-  // TODO: Fetch request to your Cloudflare Tunnel URL goes here.
-  // Example (placeholder):
-  // return fetch("https://<your-tunnel>.trycloudflare.com/generate", { method: "POST", body: ... });
-  void imagePayload;
-  throw new Error("generateAvatarLocalVTO not implemented yet.");
-}
-
 /**
  * Beta-only avatar generation router.
  *
@@ -86,11 +75,7 @@ export async function generateAvatar(
     );
   }
 
-  const {
-    betaFeaturesEnabled,
-    betaFastAiGeneration,
-    betaHighAccuracyVto,
-  } = userSettings;
+  const { betaFeaturesEnabled, betaFastAiGeneration } = userSettings;
 
   if (!betaFeaturesEnabled) {
     throw new BetaAvatarGenerationError(
@@ -99,20 +84,8 @@ export async function generateAvatar(
     );
   }
 
-  if (betaFastAiGeneration && betaHighAccuracyVto) {
-    // Should be impossible if UI enforces mutual exclusion, but keep it safe.
-    throw new BetaAvatarGenerationError(
-      "INVALID_BETA_SETTINGS",
-      "Beta settings are invalid: both models are enabled.",
-    );
-  }
-
   if (betaFastAiGeneration) {
     return generateAvatarFastAPI(imagePayload);
-  }
-
-  if (betaHighAccuracyVto) {
-    return generateAvatarLocalVTO(imagePayload);
   }
 
   throw new BetaAvatarGenerationError(
