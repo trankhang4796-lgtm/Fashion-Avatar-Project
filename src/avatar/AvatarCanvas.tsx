@@ -182,8 +182,8 @@ export default function AvatarCanvas({
 
       {!betaFeaturesEnabled ? (
         <div className="mx-auto w-fit max-w-full rounded-3xl border-4 border-slate-800 bg-white p-4 shadow-xl dark:bg-surface">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start gap-3">
+          <div className="flex min-h-0 max-h-[min(80dvh,56rem)] flex-col gap-3 overflow-y-auto overflow-x-hidden p-2">
+            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-3">
               <div className="flex w-[400px] max-w-full flex-col gap-3">
                 <div
                   className={`relative flex ${clothingSlotSizeClasses} items-center justify-center ${slotBaseClasses}`}
@@ -342,8 +342,8 @@ export default function AvatarCanvas({
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-slate-200 pt-3">
-            <div className="flex items-start gap-3">
+          <div className="flex min-h-0 max-h-[min(calc(100dvh-22rem),48rem)] flex-col gap-3 overflow-y-auto overflow-x-hidden border-t border-slate-200 p-2 pt-3">
+            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-3">
               <div className="flex w-[400px] max-w-full flex-col gap-3">
                 <div
                   className="group relative flex h-[220px] w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-transparent lg:h-[228px]"

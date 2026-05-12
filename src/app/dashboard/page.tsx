@@ -95,9 +95,10 @@ export default function DashboardPage() {
   };
 
   const handleGenerateAiTryOn = async () => {
-    if (!upperWear && !lowerWear) {
+    const hasAccessory = accessories.length > 0;
+    if (!upperWear && !lowerWear && !shoes && !hasAccessory) {
       setSaveMessage(
-        "Equip at least one clothing item (upper or lower) before generating.",
+        "Equip at least one clothing item (upper, lower, shoes, or accessories) before generating.",
       );
       return;
     }
@@ -111,6 +112,8 @@ export default function DashboardPage() {
         upperWearUrl: upperWear?.url || null,
         lowerWearUrl: lowerWear?.url || null,
         customAvatarUrl: customAvatarUrl || null,
+        shoesUrl: shoes?.url || null,
+        accessoriesUrls: accessories.map((a) => a.url),
       };
 
       const result = await generateAvatar(payload, betaSettings);
@@ -133,8 +136,10 @@ export default function DashboardPage() {
     <main className="relative flex h-[calc(100vh-73px)] w-full overflow-hidden">
       {/* Wardrobe – left sliding sidebar */}
       <aside
-        className={`h-full min-h-0 shrink-0 border-r transition-all duration-300 ease-in-out ${
-          isWardrobeOpen ? "w-1/2 border-border-theme" : "w-20 border-transparent"
+        className={`absolute left-0 top-0 z-40 h-full bg-surface transition-all duration-300 ease-in-out md:relative md:block md:min-h-0 md:shrink-0 ${
+          isWardrobeOpen
+            ? "w-full border-r border-border-theme md:w-1/2"
+            : "w-0 overflow-hidden md:w-20 md:border-transparent"
         }`}
       >
         <WardrobeSidebar
@@ -151,8 +156,18 @@ export default function DashboardPage() {
       </aside>
 
       {/* Center stage – blank canvas */}
-      <section className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden transition-all duration-300 ease-in-out">
-        <div className="absolute right-6 top-6 z-10 flex flex-col items-end gap-2">
+      <section className="relative z-0 flex h-full min-h-0 w-full min-w-0 flex-1 items-center justify-center overflow-hidden transition-all duration-300 ease-in-out">
+        {!isWardrobeOpen ? (
+          <button
+            type="button"
+            onClick={() => setIsWardrobeOpen(true)}
+            className="absolute left-4 top-6 z-30 flex h-14 w-14 items-center justify-center rounded-lg border border-border-theme bg-surface text-xl text-foreground shadow-sm transition-colors hover:bg-surface-alt md:hidden"
+            aria-label="Open wardrobe"
+          >
+            +
+          </button>
+        ) : null}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-6 md:top-6 z-10 flex flex-col items-center md:items-end gap-2 w-full px-4 md:px-0 md:w-auto">
           <div className="flex gap-2">
             {editingOutfit ? (
               <>

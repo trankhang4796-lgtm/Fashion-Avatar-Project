@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import Link from "next/link";
 import AccountMenu from "@/src/account/AccountMenu";
@@ -17,6 +17,17 @@ export default function Navbar() {
   const { editingOutfit, setEditingOutfit } = useWardrobe();
   const router = useRouter();
   const [pendingRoute, setPendingRoute] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleNavClick = (href, e) => {
+    e.preventDefault();
+    setIsMobileMenuOpen(false);
+    if (editingOutfit) {
+      setPendingRoute(href);
+    } else {
+      router.push(href);
+    }
+  };
 
   return (
     <header className="w-full bg-brand-cream border-b border-border-theme">
@@ -56,14 +67,7 @@ export default function Navbar() {
           {navLinks.map((link) => (
             <button
               key={link.href}
-              onClick={(e) => {
-                e.preventDefault();
-                if (editingOutfit) {
-                  setPendingRoute(link.href);
-                } else {
-                  router.push(link.href);
-                }
-              }}
+              onClick={(e) => handleNavClick(link.href, e)}
               className="text-base font-medium text-foreground transition-colors hover:text-brand-mint"
             >
               {link.label}
@@ -71,9 +75,47 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Login Button - Far Right */}
-        <AccountMenu />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-lg border border-border-theme p-2 text-foreground transition-colors hover:bg-surface-alt md:hidden"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-main-nav"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+          >
+            {isMobileMenuOpen ? (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+          <AccountMenu />
+        </div>
       </div>
+
+      {isMobileMenuOpen && (
+        <nav
+          id="mobile-main-nav"
+          className="font-jakarta flex flex-col gap-1 border-t border-border-theme bg-brand-cream px-6 py-3 md:hidden"
+          aria-label="Main navigation"
+        >
+          {navLinks.map((link) => (
+            <button
+              key={link.href}
+              type="button"
+              onClick={(e) => handleNavClick(link.href, e)}
+              className="w-full rounded-lg px-3 py-3 text-left text-base font-medium text-foreground transition-colors hover:bg-surface-alt hover:text-brand-mint"
+            >
+              {link.label}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {/* Navigation Guard Modal */}
       {pendingRoute && (

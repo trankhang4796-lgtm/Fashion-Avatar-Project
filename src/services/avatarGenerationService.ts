@@ -26,6 +26,8 @@ export type GenerateAvatarImagePayload = {
   upperWearUrl: string | null;
   lowerWearUrl: string | null;
   customAvatarUrl?: string | null;
+  shoesUrl?: string | null;
+  accessoriesUrls?: string[];
 };
 
 type ImagePayload = GenerateAvatarImagePayload;

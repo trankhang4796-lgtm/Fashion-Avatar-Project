@@ -4,9 +4,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type GenerateAvatarRequestBody = {
-  upperWearUrl: string;
-  lowerWearUrl: string;
+  upperWearUrl?: string | null;
+  lowerWearUrl?: string | null;
   customAvatarUrl?: string | null;
+  shoesUrl?: string | null;
+  accessoriesUrls?: string[];
 };
 
 function isNonEmptyString(value: unknown): value is string {
@@ -60,10 +62,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { upperWearUrl, lowerWearUrl, customAvatarUrl } = body;
-  if (!isNonEmptyString(upperWearUrl) || !isNonEmptyString(lowerWearUrl)) {
+  const { upperWearUrl, lowerWearUrl, customAvatarUrl, shoesUrl, accessoriesUrls } = body;
+
+  const hasUpper = isNonEmptyString(upperWearUrl);
+  const hasLower = isNonEmptyString(lowerWearUrl);
+  const hasShoes = isNonEmptyString(shoesUrl);
+  const hasAccessories =
+    Array.isArray(accessoriesUrls) &&
+    accessoriesUrls.some((u) => isNonEmptyString(u));
+
+  if (!hasUpper && !hasLower && !hasShoes && !hasAccessories) {
     return NextResponse.json(
-      { error: "upperWearUrl and lowerWearUrl are required strings." },
+      {
+        error:
+          "Provide at least one of: upperWearUrl, lowerWearUrl, shoesUrl, or non-empty entries in accessoriesUrls.",
+      },
       { status: 400 },
     );
   }
@@ -82,26 +95,50 @@ export async function POST(request: Request) {
     }
 
     const [upperPart, lowerPart] = await Promise.all([
-      urlToGenerativePart(upperWearUrl),
-      urlToGenerativePart(lowerWearUrl),
+      hasUpper ? urlToGenerativePart(upperWearUrl) : Promise.resolve(null),
+      hasLower ? urlToGenerativePart(lowerWearUrl) : Promise.resolve(null),
     ]);
 
-    geminiParts.push({
-      text: "Reference Image 2 (Upper Clothing): Describe this exact top.",
-    });
-    geminiParts.push(upperPart);
+    if (upperPart) {
+      geminiParts.push({
+        text: "Reference Image 2 (Upper Clothing): Describe this exact top.",
+      });
+      geminiParts.push(upperPart);
+    }
 
-    geminiParts.push({
-      text: "Reference Image 3 (Lower Clothing): Describe these exact bottoms.",
-    });
-    geminiParts.push(lowerPart);
+    if (lowerPart) {
+      geminiParts.push({
+        text: "Reference Image 3 (Lower Clothing): Describe these exact bottoms.",
+      });
+      geminiParts.push(lowerPart);
+    }
+
+    if (hasShoes) {
+      geminiParts.push({
+        text: "Reference Image 4 (Shoes): Describe these exact shoes in high detail. You MUST state their exact primary and secondary colors, their material, and their specific style.",
+      });
+      geminiParts.push(await urlToGenerativePart(shoesUrl));
+    }
+
+    if (Array.isArray(accessoriesUrls) && accessoriesUrls.length > 0) {
+      let accessoryImageNum = 5;
+      for (const accessoryUrl of accessoriesUrls) {
+        if (!isNonEmptyString(accessoryUrl)) continue;
+        geminiParts.push({
+          text: `Reference Image ${accessoryImageNum} (Accessory): Describe this exact accessory in high detail. You MUST state exactly what type of accessory it is (e.g., watch, cap, necklace, earrings), its exact colors, and its material.`,
+        });
+        geminiParts.push(await urlToGenerativePart(accessoryUrl));
+        accessoryImageNum += 1;
+      }
+    }
 
     const visionUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(
       apiKey,
     )}`;
 
     geminiParts.push({
-      text: 'Synthesize the references into a single descriptive sentence. Format exactly like this: "A photorealistic fashion editorial of a [traits and pose from Image 1] wearing [clothing from Image 2] and [clothing from Image 3]." Return ONLY this single sentence.',
+      text:
+        'Synthesize the references into a single descriptive sentence. Format exactly like this: "A photorealistic fashion editorial of a [traits and pose from Image 1] wearing [clothing from Image 2], [clothing from Image 3], [shoes from Image 4], and [accessories from Image 5+]." Return ONLY this single sentence.',
     });
 
     const visionResponse = await fetch(visionUrl, {
