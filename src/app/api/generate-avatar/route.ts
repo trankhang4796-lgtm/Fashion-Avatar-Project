@@ -101,21 +101,21 @@ export async function POST(request: Request) {
 
     if (upperPart) {
       geminiParts.push({
-        text: "Reference Image 2 (Upper Clothing): Describe this exact top.",
+        text: "Reference Image 2 (Upper Clothing): Describe this exact top in extreme detail. You MUST state the exact type of clothing (e.g., hoodie, t-shirt, jacket, button-up), the style and fit, the primary and secondary colors, the material, and you MUST explicitly read and include any text, writing, characters, logos, or distinct graphics printed on it (e.g., 'a black hoodie that says California in white text').",
       });
       geminiParts.push(upperPart);
     }
 
     if (lowerPart) {
       geminiParts.push({
-        text: "Reference Image 3 (Lower Clothing): Describe these exact bottoms.",
+        text: "Reference Image 3 (Lower Clothing): Describe these exact bottoms in extreme detail. You MUST state the exact type (e.g., jeans, cargo pants, sweatpants, shorts), the fit and style, the exact colors, the material, and explicitly include any text, logos, or distinct patterns visible on them.",
       });
       geminiParts.push(lowerPart);
     }
 
     if (hasShoes) {
       geminiParts.push({
-        text: "Reference Image 4 (Shoes): Describe these exact shoes in high detail. You MUST state their exact primary and secondary colors, their material, and their specific style.",
+        text: "Reference Image 4 (Shoes): Describe these exact shoes in extreme detail. You MUST state their exact primary and secondary colors, their material, their specific style (e.g., high-top sneakers, boots, running shoes), and explicitly include any visible text, logos, or distinct branding marks.",
       });
       geminiParts.push(await urlToGenerativePart(shoesUrl));
     }
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
       for (const accessoryUrl of accessoriesUrls) {
         if (!isNonEmptyString(accessoryUrl)) continue;
         geminiParts.push({
-          text: `Reference Image ${accessoryImageNum} (Accessory): Describe this exact accessory in high detail. You MUST state exactly what type of accessory it is (e.g., watch, cap, necklace, earrings), its exact colors, and its material.`,
+          text: `Reference Image ${accessoryImageNum} (Accessory): Describe this exact accessory in extreme detail. You MUST state exactly what type of accessory it is (e.g., watch, cap, necklace, earrings, belt), its exact colors, its material, and explicitly read any text, characters, or logos written on it.`,
         });
         geminiParts.push(await urlToGenerativePart(accessoryUrl));
         accessoryImageNum += 1;
