@@ -28,6 +28,10 @@ interface WardrobeSidebarProps {
     accessories: WardrobeItem[],
   ) => void;
   newlySavedOutfit?: SavedOutfit | null;
+  onUpperWearChange?: (item: WardrobeItem | null) => void;
+  onLowerWearChange?: (item: WardrobeItem | null) => void;
+  onShoesChange?: (item: WardrobeItem | null) => void;
+  onAccessoriesChange?: (items: WardrobeItem[]) => void;
 }
 
 export default function WardrobeSidebar({
@@ -35,9 +39,14 @@ export default function WardrobeSidebar({
   onToggle,
   onEquipOutfit,
   newlySavedOutfit,
+  onUpperWearChange,
+  onLowerWearChange,
+  onShoesChange,
+  onAccessoriesChange,
 }: WardrobeSidebarProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"clothes" | "outfits">("clothes");
+  const [stagedItems, setStagedItems] = useState<WardrobeItem[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
   const [outfitToDelete, setOutfitToDelete] = useState<SavedOutfit | null>(null);
@@ -60,6 +69,41 @@ export default function WardrobeSidebar({
 
   const handleRemoveItem = (id: string) => {
     setItemToDelete(id);
+  };
+
+  const handleItemToggle = (item: WardrobeItem) => {
+    setStagedItems((prev) => {
+      if (prev.some((i) => i.id === item.id)) {
+        return prev.filter((i) => i.id !== item.id);
+      }
+      if (item.type === "accessories") {
+        return [...prev, item];
+      }
+      return [...prev.filter((i) => i.type !== item.type), item];
+    });
+  };
+
+  const handleApplySelection = () => {
+    const upper = stagedItems.find((i) => i.type === "upper");
+    const lower = stagedItems.find((i) => i.type === "lower");
+    const shoes = stagedItems.find((i) => i.type === "shoes");
+    const accessoriesOnly = stagedItems.filter((i) => i.type === "accessories");
+
+    if (upper) onUpperWearChange?.(upper);
+    if (lower) onLowerWearChange?.(lower);
+    if (shoes) onShoesChange?.(shoes);
+    if (accessoriesOnly.length > 0) {
+      onAccessoriesChange?.(accessoriesOnly);
+    }
+
+    setStagedItems([]);
+
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767px)").matches
+    ) {
+      onToggle();
+    }
   };
 
   useEffect(() => {
@@ -195,14 +239,15 @@ export default function WardrobeSidebar({
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         {activeTab === "outfits" ? (
           savedOutfits.length === 0 ? (
             <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
               No saved outfits yet.
             </p>
           ) : (
-            <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-3">
               {savedOutfits.map((outfit) => (
                 <div
                   key={outfit.id}
@@ -405,12 +450,27 @@ export default function WardrobeSidebar({
             No clothes added yet.
           </p>
         ) : (
-          <div className="h-full min-h-0 overflow-y-auto pr-1">
             <ImageGrid
               key={user?.id ?? "guest"}
               images={items}
               onRemove={handleRemoveItem}
+              selectedItemIds={stagedItems.map((i) => i.id)}
+              onItemToggle={handleItemToggle}
             />
+        )}
+        </div>
+        {stagedItems.length > 0 && (
+          <div className="sticky bottom-0 left-0 right-0 p-4 bg-white dark:bg-surface border-t border-border-theme shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
+            <button
+              type="button"
+              onClick={handleApplySelection}
+              className="w-full py-3 px-4 bg-brand-forest text-white rounded-xl font-bold hover:bg-brand-forest/90 transition-colors flex justify-between items-center"
+            >
+              <span>
+                Apply {stagedItems.length} Item{stagedItems.length > 1 ? "s" : ""}
+              </span>
+              <span>→</span>
+            </button>
           </div>
         )}
       </div>
@@ -510,6 +570,9 @@ export default function WardrobeSidebar({
                 onClick={async () => {
                   try {
                     await removeItem(itemToDelete!);
+                    setStagedItems((prev) =>
+                      prev.filter((i) => i.id !== itemToDelete),
+                    );
                     setItemToDelete(null);
                   } catch (error) {
                     console.error("Failed to delete the item:", error);

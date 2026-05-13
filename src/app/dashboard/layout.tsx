@@ -9,5 +9,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div className="min-h-[100dvh] lg:h-[100dvh] overflow-y-auto lg:overflow-hidden relative">
+      {children}
+    </div>
+  );
 }

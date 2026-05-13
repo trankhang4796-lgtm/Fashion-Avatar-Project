@@ -53,19 +53,6 @@ export default function DashboardPage() {
     }
   }, [editingOutfit]);
 
-  useEffect(() => {
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-    };
-  }, []);
-
   const handleSaveOutfit = async () => {
     if (!upperWear || !lowerWear || !shoes) {
       setSaveMessage("Upper, Lower, and Shoes are required to save an outfit.");
@@ -153,7 +140,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="relative flex h-[calc(100vh-73px)] w-full overflow-hidden">
+    <main className="relative flex flex-col md:flex-row h-auto min-h-full lg:h-full w-full overflow-y-auto lg:overflow-hidden pb-24 lg:pb-0">
       {/* Wardrobe – left sliding sidebar */}
       <aside
         className={`absolute left-0 top-0 z-40 h-full bg-surface transition-all duration-300 ease-in-out md:relative md:block md:min-h-0 md:shrink-0 ${
@@ -172,11 +159,15 @@ export default function DashboardPage() {
             setAccessories(nextAccessories);
           }}
           newlySavedOutfit={newlySavedOutfit}
+          onUpperWearChange={setUpperWear}
+          onLowerWearChange={setLowerWear}
+          onShoesChange={setShoes}
+          onAccessoriesChange={setAccessories}
         />
       </aside>
 
       {/* Center stage – blank canvas */}
-      <section className="relative z-0 flex h-full min-h-0 w-full min-w-0 flex-1 items-center justify-center overflow-hidden transition-all duration-300 ease-in-out">
+      <section className="relative z-0 flex h-auto min-h-0 w-full min-w-0 flex-1 items-center justify-center overflow-y-auto lg:h-full lg:overflow-hidden transition-all duration-300 ease-in-out">
         {!isWardrobeOpen ? (
           <button
             type="button"

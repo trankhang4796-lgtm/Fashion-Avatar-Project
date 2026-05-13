@@ -73,12 +73,12 @@ export default function AvatarCanvas({
 
   return (
     <div
-      className="flex h-full w-full items-center justify-center p-4"
+      className="flex h-auto min-h-full lg:h-full w-full items-center justify-center p-2 sm:p-4 lg:pb-8"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleGlobalDrop}
     >
-      <div className="flex flex-col lg:flex-row gap-6 items-start rounded-3xl border-4 border-slate-800 bg-white p-6 shadow-xl dark:bg-surface">
-        <div className="w-[340px] h-[640px] shrink-0 rounded-2xl overflow-hidden relative bg-white border border-border-theme dark:bg-surface-alt">
+      <div className="flex h-auto lg:h-[85vh] lg:max-h-[850px] w-full max-w-5xl flex-col lg:flex-row gap-4 lg:gap-6 items-center lg:items-start rounded-3xl border-4 border-slate-800 bg-white p-4 sm:p-6 shadow-xl dark:bg-surface">
+        <div className="w-full max-w-[340px] h-[400px] sm:h-[500px] lg:h-[640px] shrink-0 rounded-2xl overflow-hidden relative bg-white border border-border-theme dark:bg-surface-alt">
           {customAvatarUrl ? (
             <Image
               src={customAvatarUrl}
@@ -97,10 +97,10 @@ export default function AvatarCanvas({
           )}
         </div>
 
-        <div className="grid grid-cols-[260px_140px] gap-4">
+        <div className="grid w-full max-w-[340px] lg:max-w-none grid-cols-2 lg:grid-cols-[260px_140px] gap-3 lg:gap-4">
           <div
             className={
-              "col-start-1 row-start-1 h-[220px] relative flex items-center justify-center " +
+              "col-span-1 lg:col-start-1 lg:row-start-1 h-[180px] lg:h-[220px] relative flex items-center justify-center " +
               slotBaseClasses
             }
           >
@@ -120,7 +120,7 @@ export default function AvatarCanvas({
 
           <div
             className={
-              "col-start-2 row-start-1 h-[220px] relative flex items-center justify-center " +
+              "col-span-1 lg:col-start-2 lg:row-start-1 h-[180px] lg:h-[220px] relative flex items-center justify-center " +
               slotBaseClasses +
               (accessories.length > 0 ? " p-2" : "")
             }
@@ -150,7 +150,7 @@ export default function AvatarCanvas({
 
           <div
             className={
-              "col-start-1 row-start-2 h-[260px] relative flex items-center justify-center " +
+              "col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-2 h-[200px] lg:h-[260px] relative flex items-center justify-center " +
               slotBaseClasses
             }
           >
@@ -170,7 +170,7 @@ export default function AvatarCanvas({
 
           <div
             className={
-              "col-start-1 row-start-3 h-[128px] relative flex items-center justify-center " +
+              "col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-3 h-[100px] lg:h-[128px] relative flex items-center justify-center " +
               slotBaseClasses
             }
           >
