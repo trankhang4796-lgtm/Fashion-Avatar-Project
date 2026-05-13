@@ -25,11 +25,24 @@ export default function DashboardPage() {
   const [generatedAvatarImage, setGeneratedAvatarImage] = useState<string | null>(
     null,
   );
+  const [showBetaWarning, setShowBetaWarning] = useState(false);
+  const [dontShowAgainWarning, setDontShowAgainWarning] = useState(false);
 
   const { editingOutfit, setEditingOutfit, customAvatarUrl } = useWardrobe();
   const betaSettings = useBetaSettings();
   const canGenerateAiTryOn =
     betaSettings.betaFeaturesEnabled && betaSettings.betaFastAiGeneration;
+
+  useEffect(() => {
+    if (
+      betaSettings.betaFeaturesEnabled &&
+      !window.localStorage.getItem("fashion-avatar:hide-beta-warning")
+    ) {
+      setShowBetaWarning(true);
+    } else {
+      setShowBetaWarning(false);
+    }
+  }, [betaSettings.betaFeaturesEnabled]);
 
   useEffect(() => {
     if (editingOutfit) {
@@ -130,6 +143,13 @@ export default function DashboardPage() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleCloseBetaWarning = () => {
+    if (dontShowAgainWarning) {
+      window.localStorage.setItem("fashion-avatar:hide-beta-warning", "true");
+    }
+    setShowBetaWarning(false);
   };
 
   return (
@@ -310,6 +330,45 @@ export default function DashboardPage() {
           onCancel={() => setShowUsernameModal(false)}
         />
       )}
+
+      {showBetaWarning ? (
+        <div className="absolute bottom-6 right-6 z-50 w-80 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-lg dark:border-amber-900/50 dark:bg-amber-900/20 animate-in slide-in-from-bottom-5">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-500">
+                Beta Limitations
+              </h3>
+              <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-500/80">
+                AI Try-On is in Beta. Generated avatars, clothing fits, and details may be
+                inaccurate or contain visual artifacts.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCloseBetaWarning}
+              className="text-amber-600 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400"
+              aria-label="Close warning"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="dont-show-again"
+              checked={dontShowAgainWarning}
+              onChange={(e) => setDontShowAgainWarning(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+            />
+            <label
+              htmlFor="dont-show-again"
+              className="text-xs text-amber-700/80 dark:text-amber-500/80 cursor-pointer"
+            >
+              Don't show again while Beta is on
+            </label>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

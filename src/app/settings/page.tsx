@@ -801,6 +801,9 @@ function SettingsContent() {
                           setBetaFeaturesEnabled(enabled);
                           if (!enabled) {
                             setBetaFastAiGeneration(false);
+                            window.localStorage.removeItem(
+                              "fashion-avatar:hide-beta-warning",
+                            );
                           }
                         }}
                         className="peer sr-only"
