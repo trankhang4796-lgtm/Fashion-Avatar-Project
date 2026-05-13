@@ -52,9 +52,6 @@ export default function WardrobeGrid({
             <p className="text-sm font-semibold text-foreground">
               {getLabel(item.type)}
             </p>
-            <p className="mt-0.5 text-xs text-foreground/70">
-              {item.isOwned ? "Owned" : "Wishlist"}
-            </p>
           </div>
         </article>
       ))}

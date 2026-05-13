@@ -1,40 +1,90 @@
+"use client";
+
+import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useId, useState } from "react";
+import { getCommunityOutfits } from "@/src/utils/outfits";
 
 const rotations = ["rotate-2", "-rotate-3", "rotate-1", "-rotate-2", "rotate-3"];
 
-function ClothingCard({ i }: { i: number }) {
+function ClothingCard({ i, imageUrl }: { i: number; imageUrl?: string }) {
   return (
     <div
       className={[
-        "h-64 w-48 rounded-2xl bg-slate-200 shadow-lg ring-1 ring-black/5",
+        "relative h-64 w-48 overflow-hidden rounded-2xl bg-slate-200 shadow-lg ring-1 ring-black/5",
         rotations[i % rotations.length],
       ].join(" ")}
-    />
+    >
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt="Community clothing item"
+          fill
+          unoptimized
+          className="object-contain p-4"
+        />
+      ) : null}
+    </div>
   );
 }
 
-function ClothingCardSet() {
+function ClothingCardSet({ images }: { images: (string | undefined)[] }) {
+  const setId = useId();
+
   return (
     <>
       {Array.from({ length: 5 }).map((_, i) => (
-        <ClothingCard key={i} i={i} />
+        <ClothingCard
+          key={`${setId}-${i}`}
+          i={i}
+          imageUrl={images[i]}
+        />
       ))}
     </>
   );
 }
 
 export default function LandingPage() {
+  const [allImages, setAllImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getCommunityOutfits(0, 10, "newest").then((outfits) => {
+      const extractedImages = outfits
+        .flatMap((outfit) => [
+          outfit.upperWearImage,
+          outfit.lowerWearImage,
+          outfit.shoesImage,
+          ...(outfit.accessoryImages || []),
+        ])
+        .filter(Boolean) as string[];
+      if (!cancelled) setAllImages(extractedImages);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const topRow = Array.from({ length: 5 }).map((_, i) =>
+    allImages.length > 0 ? allImages[i % allImages.length] : undefined,
+  );
+  const bottomRow = Array.from({ length: 5 }).map((_, i) =>
+    allImages.length > 0 ? allImages[(i + 5) % allImages.length] : undefined,
+  );
+
   return (
     <main className="relative min-h-[calc(100vh-73px)] w-full overflow-hidden bg-brand-cream flex flex-col items-center justify-center">
       {/* Background marquee */}
       <div className="absolute inset-0 z-0 flex flex-col justify-center gap-12 opacity-30 pointer-events-none overflow-hidden">
-        <div className="flex w-max animate-marquee gap-8">
-          <ClothingCardSet />
-          <ClothingCardSet />
+        <div className="flex w-max animate-marquee gap-8 pr-8">
+          <ClothingCardSet images={topRow} />
+          <ClothingCardSet images={topRow} />
         </div>
-        <div className="flex w-max animate-marquee-reverse gap-8 -ml-48">
-          <ClothingCardSet />
-          <ClothingCardSet />
+        <div className="flex w-max animate-marquee-reverse gap-8 pr-8 -ml-48">
+          <ClothingCardSet images={bottomRow} />
+          <ClothingCardSet images={bottomRow} />
         </div>
       </div>
 

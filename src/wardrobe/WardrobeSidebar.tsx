@@ -37,9 +37,7 @@ export default function WardrobeSidebar({
   newlySavedOutfit,
 }: WardrobeSidebarProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"owned" | "unowned" | "outfits">(
-    "owned",
-  );
+  const [activeTab, setActiveTab] = useState<"clothes" | "outfits">("clothes");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
   const [outfitToDelete, setOutfitToDelete] = useState<SavedOutfit | null>(null);
@@ -139,10 +137,6 @@ export default function WardrobeSidebar({
     };
   }, []);
 
-  const filteredItems = items.filter((item) =>
-    activeTab === "owned" ? item.isOwned : !item.isOwned,
-  );
-
   if (!isOpen) {
     return (
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background p-4">
@@ -179,25 +173,14 @@ export default function WardrobeSidebar({
       <div className="mb-3 flex shrink-0 gap-4 border-b border-slate-200">
         <button
           type="button"
-          onClick={() => setActiveTab("owned")}
+          onClick={() => setActiveTab("clothes")}
           className={`pb-2 text-sm font-medium ${
-            activeTab === "owned"
+            activeTab === "clothes"
               ? "border-b-2 border-brand-forest text-brand-forest"
               : "text-slate-400"
           }`}
         >
-          Owned
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("unowned")}
-          className={`pb-2 text-sm font-medium ${
-            activeTab === "unowned"
-              ? "border-b-2 border-brand-forest text-brand-forest"
-              : "text-slate-400"
-          }`}
-        >
-          Wishlist
+          Clothes
         </button>
         <button
           type="button"
@@ -417,15 +400,15 @@ export default function WardrobeSidebar({
           )
         ) : !isLoaded ? (
           <p className="text-sm text-slate-500">Loading wardrobe...</p>
-        ) : filteredItems.length === 0 ? (
+        ) : items.length === 0 ? (
           <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
-            No {activeTab === "owned" ? "owned" : "wishlist"} items yet.
+            No clothes added yet.
           </p>
         ) : (
           <div className="h-full min-h-0 overflow-y-auto pr-1">
             <ImageGrid
               key={user?.id ?? "guest"}
-              images={filteredItems}
+              images={items}
               onRemove={handleRemoveItem}
             />
           </div>

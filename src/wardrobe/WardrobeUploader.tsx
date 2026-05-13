@@ -9,7 +9,6 @@ import UsernameSetupModal from "@/src/components/UsernameSetupModal";
 import CameraView from "./CameraView";
 import ClothingType from "./ClothingType";
 import DropZone from "./DropZone";
-import OwnershipToggle from "./OwnershipToggle";
 import { ClothingType as ClothingTypeValue } from "./types";
 
 interface PendingImage {
@@ -72,7 +71,6 @@ export default function WardrobeUploader({
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [categoryMode, setCategoryMode] = useState<"same" | "per-item">("same");
   const [globalCategory, setGlobalCategory] = useState<ClothingTypeValue | "">("");
-  const [isOwned, setIsOwned] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressText, setProgressText] = useState("Initializing AI...");
   const [progressPercent, setProgressPercent] = useState(0);
@@ -290,7 +288,6 @@ export default function WardrobeUploader({
     setPendingImages([]);
     setGlobalCategory("");
     setCategoryMode("same");
-    setIsOwned(true);
   };
 
   const updatePendingImageCategory = (id: string, type: PendingImage["type"]) => {
@@ -319,7 +316,7 @@ export default function WardrobeUploader({
         addItem({
           url: image.url,
           type: image.type as ClothingTypeValue,
-          isOwned,
+          isOwned: true,
         }),
       ),
     );
@@ -448,10 +445,6 @@ export default function WardrobeUploader({
               />
             </div>
           ) : null}
-
-          <div className="mt-3">
-            <OwnershipToggle value={isOwned} onChange={setIsOwned} />
-          </div>
         </div>
 
         {pendingImages.length > 0 ? (
