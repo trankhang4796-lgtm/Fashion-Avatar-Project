@@ -4,19 +4,19 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { createClient } from "@/src/utils/supabase/client";
 import SignOutButton from "./SignOutButton";
 
 export default function AccountMenu() {
   const supabase = useMemo(() => createClient(), []);
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [username, setUsername] = useState("User");
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState("");
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -116,7 +116,7 @@ export default function AccountMenu() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, setTheme]);
 
   // Listen for manual profile updates from the Settings page
   useEffect(() => {

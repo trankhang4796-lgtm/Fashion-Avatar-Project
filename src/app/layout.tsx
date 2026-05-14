@@ -9,6 +9,7 @@ import "./globals.css";
 import Navbar from "../components/Navbar";
 import { WardrobeProvider } from "@/src/context/WardrobeContext";
 import { ThemeProvider } from "@/src/components/ThemeProvider";
+import SystemHealthGuard from "@/src/utils/SystemHealthGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,8 +51,10 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <WardrobeProvider>
-            <Navbar />
-            {children}
+            <SystemHealthGuard>
+              <Navbar />
+              {children}
+            </SystemHealthGuard>
           </WardrobeProvider>
         </ThemeProvider>
       </body>

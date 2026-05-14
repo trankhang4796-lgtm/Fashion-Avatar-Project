@@ -327,7 +327,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         }
         setItems(raw ? JSON.parse(raw) : []);
 
-        let avatarRaw = window.localStorage.getItem(guestCustomAvatarStorageKey());
+        const avatarRaw = window.localStorage.getItem(guestCustomAvatarStorageKey());
         try {
           if (avatarRaw) {
             const parsed = JSON.parse(avatarRaw) as { url?: string };
@@ -358,7 +358,9 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
         window.localStorage.removeItem(guestStorageKey());
         window.localStorage.removeItem(guestCustomAvatarStorageKey());
         window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-      } catch (e) {}
+      } catch {
+        // ignore storage errors
+      }
     }
     previousUserIdRef.current = userId;
 

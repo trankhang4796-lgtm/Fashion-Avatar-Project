@@ -11,6 +11,8 @@ import { createClient } from "@/src/utils/supabase/client";
 import UsernameSetupModal from "@/src/components/UsernameSetupModal";
 import { useBetaSettings } from "@/src/hooks/useBetaSettings";
 import { generateAvatar } from "@/src/services/avatarGenerationService";
+import DashboardControls from "@/src/dashboard/components/DashboardControls";
+import AITryOnPreviewModal from "@/src/dashboard/components/AITryOnPreviewModal";
 
 export default function DashboardPage() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
@@ -22,16 +24,13 @@ export default function DashboardPage() {
   const [newlySavedOutfit, setNewlySavedOutfit] = useState<SavedOutfit | null>(null);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedAvatarImage, setGeneratedAvatarImage] = useState<string | null>(
-    null,
-  );
+  const [generatedAvatarImage, setGeneratedAvatarImage] = useState<string | null>(null);
   const [showBetaWarning, setShowBetaWarning] = useState(false);
   const [dontShowAgainWarning, setDontShowAgainWarning] = useState(false);
 
   const { editingOutfit, setEditingOutfit, customAvatarUrl } = useWardrobe();
   const betaSettings = useBetaSettings();
-  const canGenerateAiTryOn =
-    betaSettings.betaFeaturesEnabled && betaSettings.betaFastAiGeneration;
+  const canGenerateAiTryOn = betaSettings.betaFeaturesEnabled && betaSettings.betaFastAiGeneration;
 
   useEffect(() => {
     if (
@@ -65,13 +64,8 @@ export default function DashboardPage() {
     } = await supabase.auth.getSession();
 
     if (session?.user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("id", session.user.id)
-        .single();
+      const { data: profile } = await supabase.from("profiles").select("username").eq("id", session.user.id).single();
 
-      // If no profile, no username, or they still have an auto-generated "User_" name
       if (!profile || !profile.username || profile.username.startsWith("User_")) {
         setShowUsernameModal(true);
         return;
@@ -89,8 +83,9 @@ export default function DashboardPage() {
       setNewlySavedOutfit(savedOutfit);
 
       setSaveMessage(`${savedOutfit.name} saved securely to cloud!`);
-    } catch (error: any) {
-      setSaveMessage(error.message || "Failed to save outfit.");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to save outfit.";
+      setSaveMessage(message);
     }
   };
 
@@ -121,12 +116,11 @@ export default function DashboardPage() {
         setGeneratedAvatarImage(result);
         setSaveMessage("AI try-on generated!");
       } else {
-        setSaveMessage(
-          "AI generation completed, but no preview image URL was returned.",
-        );
+        setSaveMessage("AI generation completed, but no preview image URL was returned.");
       }
-    } catch (error: any) {
-      setSaveMessage(error?.message || "Failed to generate AI try-on.");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to generate AI try-on.";
+      setSaveMessage(message);
     } finally {
       setIsGenerating(false);
     }
@@ -152,14 +146,48 @@ export default function DashboardPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch {
       setSaveMessage("Failed to download image.");
     }
   };
 
+  const handleUpdateOutfit = async () => {
+    if (!editingOutfit) return;
+    try {
+      setSaveMessage("Updating...");
+      const updatedOutfit = await updateOutfitInCloud(
+        editingOutfit.id,
+        upperWear,
+        lowerWear,
+        shoes,
+        accessories,
+      );
+      setNewlySavedOutfit(updatedOutfit);
+      setSaveMessage("Outfit updated!");
+      setEditingOutfit(null);
+    } catch {
+      setSaveMessage("Failed to update.");
+    }
+  };
+
+  const handleDiscardEdit = () => {
+    setEditingOutfit(null);
+    setUpperWear(null);
+    setLowerWear(null);
+    setShoes(null);
+    setAccessories([]);
+    setSaveMessage("Discarded changes.");
+  };
+
+  const handleClearOutfit = () => {
+    setUpperWear(null);
+    setLowerWear(null);
+    setShoes(null);
+    setAccessories([]);
+  };
+
   return (
     <main className="relative flex flex-col md:flex-row h-auto min-h-full lg:h-full w-full overflow-y-auto lg:overflow-hidden pb-24 lg:pb-0">
-      {/* Wardrobe – left sliding sidebar */}
       <aside
         className={`absolute left-0 top-0 z-40 h-full bg-surface transition-all duration-300 ease-in-out md:relative md:block md:min-h-0 md:shrink-0 ${
           isWardrobeOpen
@@ -184,7 +212,6 @@ export default function DashboardPage() {
         />
       </aside>
 
-      {/* Center stage – blank canvas */}
       <section className="relative z-0 flex h-auto min-h-0 w-full min-w-0 flex-1 items-center justify-center overflow-y-auto lg:h-full lg:overflow-hidden transition-all duration-300 ease-in-out">
         {!isWardrobeOpen ? (
           <button
@@ -196,87 +223,21 @@ export default function DashboardPage() {
             +
           </button>
         ) : null}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-6 md:top-6 z-10 flex flex-col items-center md:items-end gap-2 w-full px-4 md:px-0 md:w-auto">
-          <div className="flex gap-2">
-            {editingOutfit ? (
-              <>
-                <button
-                  onClick={async () => {
-                    try {
-                      setSaveMessage("Updating...");
-                      const updatedOutfit = await updateOutfitInCloud(
-                        editingOutfit.id,
-                        upperWear,
-                        lowerWear,
-                        shoes,
-                        accessories,
-                      );
-                      setNewlySavedOutfit(updatedOutfit); // This sends the updated data instantly to the sidebar!
-                      setSaveMessage("Outfit updated!");
-                      setEditingOutfit(null); // Exit edit mode
-                    } catch (e: any) {
-                      setSaveMessage("Failed to update.");
-                    }
-                  }}
-                  className="rounded-lg bg-brand-mint px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-forest"
-                >
-                  Update Outfit
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingOutfit(null);
-                    setUpperWear(null);
-                    setLowerWear(null);
-                    setShoes(null);
-                    setAccessories([]);
-                    setSaveMessage("Discarded changes.");
-                  }}
-                  className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/70 shadow-sm hover:bg-surface-alt"
-                >
-                  Discard
-                </button>
-              </>
-            ) : (
-              <>
-                {canGenerateAiTryOn ? (
-                  <button
-                    onClick={handleGenerateAiTryOn}
-                    disabled={isGenerating}
-                    className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isGenerating ? "Generating..." : "✨ Generate AI Try-On"}
-                  </button>
-                ) : null}
-                <button
-                  onClick={handleSaveOutfit}
-                  disabled={!upperWear || !lowerWear || !shoes}
-                  className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
-                >
-                  Save Outfit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUpperWear(null);
-                    setLowerWear(null);
-                    setShoes(null);
-                    setAccessories([]);
-                  }}
-                  className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 transition-colors"
-                  title="Remove all clothing"
-                >
-                  Clear
-                </button>
-              </>
-            )}
-          </div>
 
-          {saveMessage ? (
-            <p className="rounded-lg bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm">
-              {saveMessage}
-            </p>
-          ) : null}
-        </div>
+        <DashboardControls
+          editingOutfit={editingOutfit}
+          upperWear={upperWear}
+          lowerWear={lowerWear}
+          shoes={shoes}
+          canGenerateAiTryOn={canGenerateAiTryOn}
+          isGenerating={isGenerating}
+          saveMessage={saveMessage}
+          onUpdateOutfit={handleUpdateOutfit}
+          onDiscardEdit={handleDiscardEdit}
+          onGenerateAiTryOn={handleGenerateAiTryOn}
+          onSaveOutfit={handleSaveOutfit}
+          onClearOutfit={handleClearOutfit}
+        />
 
         {isGenerating ? (
           <div className="absolute inset-0 z-20 grid place-items-center bg-foreground/20 backdrop-blur-[1px]">
@@ -285,59 +246,17 @@ export default function DashboardPage() {
                 className="h-10 w-10 animate-spin rounded-full border-4 border-border-theme border-t-brand-forest"
                 aria-label="Generating"
               />
-              <p className="text-sm font-medium text-foreground/80">
-                Generating AI try-on…
-              </p>
+              <p className="text-sm font-medium text-foreground/80">Generating AI try-on…</p>
             </div>
           </div>
         ) : null}
 
         {generatedAvatarImage ? (
-          <div
-            className="absolute inset-0 z-30 grid place-items-center bg-foreground/40 backdrop-blur-sm p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-label="AI try-on preview"
-          >
-            <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-border-theme bg-surface shadow-2xl">
-              <div className="flex items-center justify-between gap-4 border-b border-border-theme bg-surface-alt px-5 py-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">
-                    AI Try-On Preview
-                  </h2>
-                  <p className="mt-1 text-sm text-foreground/70">
-                    Review the generated result. Close to discard this preview.
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleDownloadImage}
-                    className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
-                  >
-                    ↓ Download
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGeneratedAvatarImage(null)}
-                    className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-surface-alt"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-5">
-                <div className="overflow-hidden rounded-2xl border border-border-theme bg-surface-alt">
-                  <img
-                    src={generatedAvatarImage}
-                    alt="Generated AI try-on"
-                    className="h-[70vh] w-full object-contain"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <AITryOnPreviewModal
+            imageUrl={generatedAvatarImage}
+            onClose={() => setGeneratedAvatarImage(null)}
+            onDownload={handleDownloadImage}
+          />
         ) : null}
 
         <AvatarCanvas
@@ -356,7 +275,7 @@ export default function DashboardPage() {
         <UsernameSetupModal
           onComplete={() => {
             setShowUsernameModal(false);
-            handleSaveOutfit();
+            void handleSaveOutfit();
           }}
           onCancel={() => setShowUsernameModal(false)}
         />
@@ -366,12 +285,10 @@ export default function DashboardPage() {
         <div className="absolute bottom-6 right-6 z-50 w-80 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-lg dark:border-amber-900/50 dark:bg-amber-900/20 animate-in slide-in-from-bottom-5">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-500">
-                Beta Limitations
-              </h3>
+              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-500">Beta Limitations</h3>
               <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-500/80">
-                AI Try-On is in Beta. Generated avatars, clothing fits, and details may be
-                inaccurate or contain visual artifacts.
+                AI Try-On is in Beta. Generated avatars, clothing fits, and details may be inaccurate or contain visual
+                artifacts.
               </p>
             </div>
             <button
@@ -395,7 +312,7 @@ export default function DashboardPage() {
               htmlFor="dont-show-again"
               className="text-xs text-amber-700/80 dark:text-amber-500/80 cursor-pointer"
             >
-              Don't show again while Beta is on
+              Do not show again while Beta is on
             </label>
           </div>
         </div>

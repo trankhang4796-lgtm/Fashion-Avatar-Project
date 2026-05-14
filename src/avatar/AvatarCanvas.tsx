@@ -48,7 +48,7 @@ function getOutfitSlotImageClass(
 }
 
 const removeButtonClass =
-  "absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/40 text-xs text-white backdrop-blur-sm transition-all duration-200 md:opacity-0 md:group-hover:opacity-100 hover:bg-red-500/90";
+  "absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/40 text-xs text-white backdrop-blur-sm transition-all duration-200 md:opacity-0 md:group-hover:opacity-100 hover:bg-red-500/90 pointer-events-auto";
 
 export default function AvatarCanvas({
   upperWear,
@@ -62,6 +62,7 @@ export default function AvatarCanvas({
 }: AvatarCanvasProps) {
   const { customAvatarUrl } = useWardrobe();
   const accessoryItemSize = getAccessoryItemSize(accessories.length);
+  const dropShieldClasses = "pointer-events-none";
 
   const handleGlobalDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -73,7 +74,7 @@ export default function AvatarCanvas({
       onLowerWearChange(item);
     } else if (item.type === "shoes") {
       onShoesChange(item);
-    } else if (item.type === "accessories") {
+    } else if (item.type === "accessories" || item.type === "accessory") {
       if (accessories.some((existing) => existing.id === item.id)) return;
       onAccessoriesChange([...accessories, item]);
     }
@@ -82,6 +83,7 @@ export default function AvatarCanvas({
   return (
     <div
       className="flex h-auto min-h-full lg:h-full w-full items-center justify-center p-2 sm:p-4 lg:pb-8"
+      onDragEnter={(e) => e.preventDefault()}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleGlobalDrop}
     >
@@ -93,7 +95,7 @@ export default function AvatarCanvas({
               alt="Custom avatar"
               fill
               unoptimized
-              className="object-contain p-2"
+              className={`object-contain p-2 ${dropShieldClasses}`}
               sizes="320px"
             />
           ) : (
@@ -119,7 +121,7 @@ export default function AvatarCanvas({
                   alt="Upper wear"
                   fill
                   unoptimized
-                  className={`${getOutfitSlotImageClass("upper")} pointer-events-none`}
+                  className={`${getOutfitSlotImageClass("upper")} ${dropShieldClasses}`}
                   sizes="240px"
                 />
                 <button
@@ -137,7 +139,7 @@ export default function AvatarCanvas({
                 </button>
               </>
             ) : (
-              <span className="text-lg font-semibold text-slate-400">Upper</span>
+              <span className={`text-lg font-semibold text-slate-400 ${dropShieldClasses}`}>Upper</span>
             )}
           </div>
 
@@ -151,9 +153,11 @@ export default function AvatarCanvas({
             }
           >
             {accessories.length === 0 ? (
-              <span className="text-sm font-semibold text-slate-400">Accessory</span>
+              <span className={`text-sm font-semibold text-slate-400 ${dropShieldClasses}`}>Accessory</span>
             ) : (
-              <div className="flex h-full w-full flex-row flex-wrap content-center items-center justify-center gap-2 overflow-hidden">
+              <div
+                className={`flex h-full w-full flex-row flex-wrap content-center items-center justify-center gap-2 overflow-hidden ${dropShieldClasses}`}
+              >
                 {accessories.map((item) => (
                   <div
                     key={item.id}
@@ -168,7 +172,7 @@ export default function AvatarCanvas({
                       alt="Accessory"
                       fill
                       unoptimized
-                      className={`${getOutfitSlotImageClass("accessory")} pointer-events-none`}
+                      className={`${getOutfitSlotImageClass("accessory")} ${dropShieldClasses}`}
                       sizes={`${accessoryItemSize}px`}
                     />
                     <button
@@ -205,7 +209,7 @@ export default function AvatarCanvas({
                   alt="Lower wear"
                   fill
                   unoptimized
-                  className={`${getOutfitSlotImageClass("lower")} pointer-events-none`}
+                  className={`${getOutfitSlotImageClass("lower")} ${dropShieldClasses}`}
                   sizes="240px"
                 />
                 <button
@@ -223,7 +227,7 @@ export default function AvatarCanvas({
                 </button>
               </>
             ) : (
-              <span className="text-lg font-semibold text-slate-400">Lower</span>
+              <span className={`text-lg font-semibold text-slate-400 ${dropShieldClasses}`}>Lower</span>
             )}
           </div>
 
@@ -240,7 +244,7 @@ export default function AvatarCanvas({
                   alt="Shoes"
                   fill
                   unoptimized
-                  className={`${getOutfitSlotImageClass("shoes")} pointer-events-none`}
+                  className={`${getOutfitSlotImageClass("shoes")} ${dropShieldClasses}`}
                   sizes="240px"
                 />
                 <button
@@ -258,7 +262,7 @@ export default function AvatarCanvas({
                 </button>
               </>
             ) : (
-              <span className="text-base font-semibold text-slate-400">Shoes</span>
+              <span className={`text-base font-semibold text-slate-400 ${dropShieldClasses}`}>Shoes</span>
             )}
           </div>
         </div>
