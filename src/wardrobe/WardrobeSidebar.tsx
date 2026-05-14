@@ -23,6 +23,104 @@ import type { WardrobeItem } from "./types";
 
 export type { WardrobeItem as ClothingItem } from "./types";
 
+type OutfitAccessoryCandidate = Partial<WardrobeItem> & {
+  category?: unknown;
+  slot?: unknown;
+  imageUrl?: string | null;
+  image?: string | null;
+  uri?: string | null;
+  photoUrl?: string | null;
+  src?: string | null;
+  name?: string | null;
+};
+
+type CompactAccessoryPreviewItem = {
+  id: string;
+  imageSrc: string;
+  name: string;
+};
+
+function getOutfitItems(outfit: SavedOutfit): OutfitAccessoryCandidate[] {
+  const outfitWithItems = outfit as SavedOutfit & {
+    items?: OutfitAccessoryCandidate[];
+    clothes?: OutfitAccessoryCandidate[];
+    selectedItems?: OutfitAccessoryCandidate[];
+  };
+
+  return (
+    outfitWithItems.items ??
+    outfitWithItems.clothes ??
+    outfitWithItems.selectedItems ??
+    []
+  );
+}
+
+function normalizeCategory(item: OutfitAccessoryCandidate) {
+  return String(item.category ?? item.type ?? item.slot ?? "")
+    .toLowerCase()
+    .trim();
+}
+
+function getImageSrc(item: OutfitAccessoryCandidate) {
+  return (
+    item.url ??
+    item.imageUrl ??
+    item.image ??
+    item.uri ??
+    item.photoUrl ??
+    item.src ??
+    ""
+  );
+}
+
+function getAccessoryItems(outfit: SavedOutfit): CompactAccessoryPreviewItem[] {
+  const accessoryCandidates: OutfitAccessoryCandidate[] = [
+    ...getOutfitItems(outfit).filter((item) => {
+      const category = normalizeCategory(item);
+      return (
+        category === "accessory" ||
+        category === "accessories" ||
+        category === "acc"
+      );
+    }),
+    ...(outfit.accessories ?? []).map(
+      (item) => item as OutfitAccessoryCandidate,
+    ),
+  ];
+
+  const seenIds = new Set<string>();
+  const seenImages = new Set<string>();
+  const accessoryItems: CompactAccessoryPreviewItem[] = [];
+
+  accessoryCandidates.forEach((item, index) => {
+    const imageSrc = getImageSrc(item);
+    if (!imageSrc) return;
+
+    const key = item.id ?? imageSrc;
+    if (seenIds.has(key) || seenImages.has(imageSrc)) return;
+    seenIds.add(key);
+    seenImages.add(imageSrc);
+
+    accessoryItems.push({
+      id: key,
+      imageSrc,
+      name: item.name ?? `Accessory ${index + 1}`,
+    });
+  });
+
+  (outfit.accessoryImages ?? []).forEach((imageSrc, index) => {
+    if (!imageSrc || seenImages.has(imageSrc)) return;
+    seenImages.add(imageSrc);
+    accessoryItems.push({
+      id: `${outfit.id}-accessory-image-${index}`,
+      imageSrc,
+      name: `Accessory ${index + 1}`,
+    });
+  });
+
+  return accessoryItems;
+}
+
 interface WardrobeSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
@@ -280,11 +378,19 @@ export default function WardrobeSidebar({
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              {savedOutfits.map((outfit) => (
-                <div
-                  key={outfit.id}
-                  className="rounded-xl border border-border-theme bg-surface p-3"
-                >
+              {savedOutfits.map((outfit) => {
+                const accessoryItems = getAccessoryItems(outfit);
+                const visibleAccessories = accessoryItems.slice(0, 4);
+                const hiddenAccessoryCount = Math.max(
+                  accessoryItems.length - visibleAccessories.length,
+                  0,
+                );
+
+                return (
+                  <div
+                    key={outfit.id}
+                    className="rounded-xl border border-border-theme bg-surface p-3"
+                  >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     {renamingOutfitId === outfit.id ? (
@@ -376,12 +482,28 @@ export default function WardrobeSidebar({
                           No Shoe
                         </div>
                       )}
-                      {outfit.accessories?.[0]?.url ? (
-                        <img
-                          src={outfit.accessories[0].url}
-                          alt={`${outfit.name} accessory`}
-                          className="h-16 w-16 rounded-md border border-slate-100 bg-slate-50 object-cover p-1"
-                        />
+                      {visibleAccessories.length > 0 ? (
+                        <div className="h-16 w-16 overflow-hidden rounded-md border border-slate-100 bg-slate-50 p-1">
+                          <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden">
+                            {visibleAccessories.map((item, index) => (
+                              <div
+                                key={`${outfit.id}-sidebar-accessory-${item.id}-${index}`}
+                                className="relative flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-sm bg-white"
+                              >
+                                <img
+                                  src={item.imageSrc}
+                                  alt={item.name}
+                                  className="h-full w-full object-contain"
+                                />
+                                {index === 3 && hiddenAccessoryCount > 0 ? (
+                                  <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-slate-900/65 text-sm font-bold text-white">
+                                    +{hiddenAccessoryCount}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       ) : (
                         <div className="flex h-16 w-16 items-center justify-center rounded-md border border-slate-100 bg-slate-50 text-[10px] text-slate-400">
                           No Acc
@@ -472,7 +594,8 @@ export default function WardrobeSidebar({
                   </div>
                 </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )
         ) : !isLoaded ? (
