@@ -81,6 +81,7 @@ export default function PrivacyTab({
   setIsPublicProfile,
 }: PrivacyTabProps) {
   const [isGatheringData, setIsGatheringData] = useState(false);
+  const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
 
   const handleRequestData = useCallback(async () => {
     setIsGatheringData(true);
@@ -172,14 +173,48 @@ export default function PrivacyTab({
               <h3 className="text-sm font-medium text-foreground">Public Profile</h3>
               <p className="mt-1 text-sm text-foreground/70">Allow your saved outfits to appear on the Community Feed.</p>
             </div>
-            <label className="relative inline-flex cursor-pointer items-center">
+            <label
+              className={`relative inline-flex items-center ${
+                isUpdatingPrivacy ? "cursor-wait opacity-60 pointer-events-none" : "cursor-pointer"
+              }`}
+            >
               <input
                 type="checkbox"
                 checked={isPublicProfile}
+                disabled={isUpdatingPrivacy}
                 onChange={async (e) => {
                   const checked = e.target.checked;
-                  setIsPublicProfile(checked);
-                  await supabase.from("profiles").update({ is_public: checked }).eq("id", user.id);
+                  setIsUpdatingPrivacy(true);
+                  try {
+                    if (!checked) {
+                      const { error: outfitsError } = await supabase
+                        .from("saved_outfits")
+                        .update({ is_published: false })
+                        .eq("user_id", user.id);
+                      if (outfitsError) {
+                        throw new Error(outfitsError.message || "Failed to unpublish outfits.");
+                      }
+                    }
+
+                    const { error: profileError } = await supabase
+                      .from("profiles")
+                      .update({ is_public: checked })
+                      .eq("id", user.id);
+                    if (profileError) {
+                      throw new Error(profileError.message || "Failed to update profile visibility.");
+                    }
+
+                    setIsPublicProfile(checked);
+                    window.dispatchEvent(new Event("saved-outfits-updated"));
+                  } catch (err) {
+                    const message =
+                      err instanceof Error
+                        ? err.message
+                        : "Could not update your privacy settings. Please try again.";
+                    alert(message);
+                  } finally {
+                    setIsUpdatingPrivacy(false);
+                  }
                 }}
                 className="peer sr-only"
               />

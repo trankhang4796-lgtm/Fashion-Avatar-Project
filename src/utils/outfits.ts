@@ -234,8 +234,9 @@ export async function getCommunityOutfits(
 
   let query = supabase
     .from("saved_outfits")
-    .select("*, profiles(username), outfit_likes(user_id)")
-    .eq("is_published", true);
+    .select("*, profiles!inner(username, is_public), outfit_likes(user_id)")
+    .eq("is_published", true)
+    .eq("profiles.is_public", true);
 
   if (sortBy === "oldest") {
     query = query.order("created_at", { ascending: true });
