@@ -13,6 +13,9 @@ import PrivacyTab from "@/src/settings/components/PrivacyTab";
 import PreferencesTab from "@/src/settings/components/PreferencesTab";
 import AppearanceTab from "@/src/settings/components/AppearanceTab";
 import BetaTab from "@/src/settings/components/BetaTab";
+import type { DefaultWardrobeViewPreference } from "@/src/settings/components/PreferencesTab";
+
+const DEFAULT_WARDROBE_VIEW_STORAGE_KEY = "fashion-avatar-default-view";
 
 type SettingsTab = "account" | "privacy" | "appearance" | "preferences" | "beta";
 
@@ -52,8 +55,9 @@ function SettingsContent() {
 
   const [isPublicProfile, setIsPublicProfile] = useState(true);
 
-  const [measurementSystem, setMeasurementSystem] = useState<"imperial" | "metric">("imperial");
-  const [defaultWardrobeView, setDefaultWardrobeView] = useState<"owned" | "unowned" | "outfits">("owned");
+  const [defaultWardrobeView, setDefaultWardrobeView] =
+    useState<DefaultWardrobeViewPreference>("clothes");
+  const [defaultViewPreferenceHydrated, setDefaultViewPreferenceHydrated] = useState(false);
   const [askBeforeCamera, setAskBeforeCamera] = useState(true);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -77,6 +81,30 @@ function SettingsContent() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DEFAULT_WARDROBE_VIEW_STORAGE_KEY);
+      if (raw === "outfits") {
+        setDefaultWardrobeView("outfits");
+      } else {
+        setDefaultWardrobeView("clothes");
+      }
+    } catch {
+      setDefaultWardrobeView("clothes");
+    } finally {
+      setDefaultViewPreferenceHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!defaultViewPreferenceHydrated) return;
+    try {
+      window.localStorage.setItem(DEFAULT_WARDROBE_VIEW_STORAGE_KEY, defaultWardrobeView);
+    } catch {
+      // Ignore storage quota / blocked storage errors
+    }
+  }, [defaultWardrobeView, defaultViewPreferenceHydrated]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -386,8 +414,6 @@ function SettingsContent() {
 
           {activeTab === "preferences" && (
             <PreferencesTab
-              measurementSystem={measurementSystem}
-              setMeasurementSystem={setMeasurementSystem}
               defaultWardrobeView={defaultWardrobeView}
               setDefaultWardrobeView={setDefaultWardrobeView}
               askBeforeCamera={askBeforeCamera}

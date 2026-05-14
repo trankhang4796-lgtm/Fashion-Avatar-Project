@@ -24,6 +24,19 @@ export default function WardrobePageContent() {
   const [savedOutfitsCount, setSavedOutfitsCount] = useState(0);
 
   useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("fashion-avatar-default-view");
+      if (raw === "outfits") {
+        setActiveTab("saved-outfits");
+      } else {
+        setActiveTab("saved-items");
+      }
+    } catch {
+      setActiveTab("saved-items");
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isAddModalOpen) return;
 
     const handleEscape = (event: KeyboardEvent) => {

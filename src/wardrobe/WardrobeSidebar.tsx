@@ -214,6 +214,19 @@ export default function WardrobeSidebar({
   };
 
   useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("fashion-avatar-default-view");
+      if (raw === "outfits") {
+        setActiveTab("outfits");
+      } else {
+        setActiveTab("clothes");
+      }
+    } catch {
+      setActiveTab("clothes");
+    }
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     void (async () => {
       const outfits = await getSavedOutfits();

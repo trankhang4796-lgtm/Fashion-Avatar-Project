@@ -1,17 +1,15 @@
 "use client";
 
+export type DefaultWardrobeViewPreference = "clothes" | "outfits";
+
 type PreferencesTabProps = {
-  measurementSystem: "imperial" | "metric";
-  setMeasurementSystem: (v: "imperial" | "metric") => void;
-  defaultWardrobeView: "owned" | "unowned" | "outfits";
-  setDefaultWardrobeView: (v: "owned" | "unowned" | "outfits") => void;
+  defaultWardrobeView: DefaultWardrobeViewPreference;
+  setDefaultWardrobeView: (v: DefaultWardrobeViewPreference) => void;
   askBeforeCamera: boolean;
   setAskBeforeCamera: (v: boolean) => void;
 };
 
 export default function PreferencesTab({
-  measurementSystem,
-  setMeasurementSystem,
   defaultWardrobeView,
   setDefaultWardrobeView,
   askBeforeCamera,
@@ -25,31 +23,17 @@ export default function PreferencesTab({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-theme pb-6">
             <div>
-              <h3 className="text-sm font-medium text-foreground">Measurement System</h3>
-              <p className="mt-1 text-sm text-foreground/70">Used for sizing and avatar adjustments.</p>
-            </div>
-            <select
-              value={measurementSystem}
-              onChange={(e) => setMeasurementSystem(e.target.value as "imperial" | "metric")}
-              className="w-full sm:w-auto rounded-lg border border-border-theme bg-surface px-3 py-2 text-sm text-foreground/70 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
-            >
-              <option value="imperial">Imperial (in, lbs)</option>
-              <option value="metric">Metric (cm, kg)</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-theme pb-6">
-            <div>
               <h3 className="text-sm font-medium text-foreground">Default Wardrobe View</h3>
               <p className="mt-1 text-sm text-foreground/70">Choose which tab opens first in the sidebar.</p>
             </div>
             <select
               value={defaultWardrobeView}
-              onChange={(e) => setDefaultWardrobeView(e.target.value as "owned" | "unowned" | "outfits")}
+              onChange={(e) =>
+                setDefaultWardrobeView(e.target.value as DefaultWardrobeViewPreference)
+              }
               className="w-full sm:w-auto rounded-lg border border-border-theme bg-surface px-3 py-2 text-sm text-foreground/70 focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint"
             >
-              <option value="owned">Owned Clothes</option>
-              <option value="unowned">Wishlist</option>
+              <option value="clothes">Clothes</option>
               <option value="outfits">Saved Outfits</option>
             </select>
           </div>
