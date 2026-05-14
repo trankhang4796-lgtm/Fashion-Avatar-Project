@@ -29,4 +29,5 @@ When you clone this repository to your laptop for <ins>the first time</ins>, you
 * `npm install @supabase/supabase-js @supabase/ssr`
 * `npm install next-themes`
 * `npm install @imgly/background-removal heic2any`
+* `npm install jszip file-saver`
 * `npm run dev`
