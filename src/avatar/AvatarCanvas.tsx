@@ -30,9 +30,20 @@ function parseDraggedItem(event: DragEvent<HTMLDivElement>) {
 const slotBaseClasses =
   "group relative overflow-hidden rounded-2xl border-4 border-dashed border-slate-300 bg-slate-50 transition-colors hover:bg-slate-100";
 
+const getAccessoryItemSize = (count: number) => {
+  if (count <= 1) return 96;
+  if (count === 2) return 78;
+  if (count <= 4) return 62;
+  return 48;
+};
+
 function getOutfitSlotImageClass(
   slot: "upper" | "lower" | "shoes" | "accessory",
 ) {
+  if (slot === "accessory") {
+    return "object-contain p-1.5 transition-transform duration-200 will-change-transform";
+  }
+
   return "object-contain p-3 sm:p-4 transition-transform duration-200 will-change-transform";
 }
 
@@ -47,6 +58,7 @@ export default function AvatarCanvas({
   onAccessoriesChange,
 }: AvatarCanvasProps) {
   const { customAvatarUrl } = useWardrobe();
+  const accessoryItemSize = getAccessoryItemSize(accessories.length);
 
   const handleGlobalDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -90,7 +102,7 @@ export default function AvatarCanvas({
           )}
         </div>
 
-        <div className="grid w-full max-w-[320px] lg:max-w-none grid-cols-2 lg:grid-cols-[240px_130px] gap-3 lg:gap-4">
+        <div className="grid w-full max-w-[320px] lg:max-w-none grid-cols-2 lg:grid-cols-[240px_220px] gap-3 lg:gap-4">
           <div
             className={
               "col-span-1 lg:col-start-1 lg:row-start-1 h-[200px] relative flex items-center justify-center " +
@@ -113,7 +125,7 @@ export default function AvatarCanvas({
 
           <div
             className={
-              "col-span-1 lg:col-start-2 lg:row-start-1 h-[200px] relative flex items-center justify-center " +
+              "col-span-2 lg:col-span-1 lg:col-start-2 lg:row-start-1 min-h-[160px] h-[200px] relative flex items-center justify-center " +
               slotBaseClasses +
               (accessories.length > 0 ? " p-2" : "")
             }
@@ -121,11 +133,15 @@ export default function AvatarCanvas({
             {accessories.length === 0 ? (
               <span className="text-sm font-semibold text-slate-400">Accessory</span>
             ) : (
-              <div className="grid h-full w-full grid-cols-2 gap-2">
+              <div className="flex h-full w-full flex-row flex-wrap content-center items-center justify-center gap-2 overflow-hidden">
                 {accessories.map((item) => (
                   <div
                     key={item.id}
                     className="relative aspect-square overflow-hidden rounded-md border border-slate-200 bg-white"
+                    style={{
+                      width: accessoryItemSize,
+                      height: accessoryItemSize,
+                    }}
                   >
                     <Image
                       src={item.url}
@@ -133,7 +149,7 @@ export default function AvatarCanvas({
                       fill
                       unoptimized
                       className={getOutfitSlotImageClass("accessory")}
-                      sizes="240px"
+                      sizes={`${accessoryItemSize}px`}
                     />
                   </div>
                 ))}
