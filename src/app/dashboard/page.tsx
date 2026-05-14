@@ -1,190 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AvatarCanvas from "@/src/avatar/AvatarCanvas";
-import { WardrobeItem } from "@/src/wardrobe/types";
-import { useWardrobe } from "@/src/context/WardrobeContext";
 import WardrobeSidebar from "@/src/wardrobe/WardrobeSidebar";
-import type { SavedOutfit } from "@/src/utils/outfits";
-import { saveOutfitToCloud, updateOutfitInCloud } from "@/src/utils/outfits";
-import { createClient } from "@/src/utils/supabase/client";
 import UsernameSetupModal from "@/src/components/UsernameSetupModal";
-import { useBetaSettings } from "@/src/hooks/useBetaSettings";
-import { generateAvatar } from "@/src/services/avatarGenerationService";
 import DashboardControls from "@/src/dashboard/components/DashboardControls";
 import AITryOnPreviewModal from "@/src/dashboard/components/AITryOnPreviewModal";
+import { useDashboard } from "@/src/hooks/useDashboard";
 
 export default function DashboardPage() {
   const [isWardrobeOpen, setIsWardrobeOpen] = useState(false);
-  const [upperWear, setUpperWear] = useState<WardrobeItem | null>(null);
-  const [lowerWear, setLowerWear] = useState<WardrobeItem | null>(null);
-  const [shoes, setShoes] = useState<WardrobeItem | null>(null);
-  const [accessories, setAccessories] = useState<WardrobeItem[]>([]);
-  const [saveMessage, setSaveMessage] = useState("");
-  const [newlySavedOutfit, setNewlySavedOutfit] = useState<SavedOutfit | null>(null);
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedAvatarImage, setGeneratedAvatarImage] = useState<string | null>(null);
-  const [showBetaWarning, setShowBetaWarning] = useState(false);
-  const [dontShowAgainWarning, setDontShowAgainWarning] = useState(false);
 
-  const { editingOutfit, setEditingOutfit, customAvatarUrl } = useWardrobe();
-  const betaSettings = useBetaSettings();
-  const canGenerateAiTryOn = betaSettings.betaFeaturesEnabled && betaSettings.betaFastAiGeneration;
-
-  useEffect(() => {
-    if (
-      betaSettings.betaFeaturesEnabled &&
-      !window.localStorage.getItem("fashion-avatar:hide-beta-warning")
-    ) {
-      setShowBetaWarning(true);
-    } else {
-      setShowBetaWarning(false);
-    }
-  }, [betaSettings.betaFeaturesEnabled]);
-
-  useEffect(() => {
-    if (editingOutfit) {
-      setUpperWear(editingOutfit.upperWear);
-      setLowerWear(editingOutfit.lowerWear);
-      setShoes(editingOutfit.shoes ?? null);
-      setAccessories(editingOutfit.accessories ?? []);
-    }
-  }, [editingOutfit]);
-
-  const handleSaveOutfit = async () => {
-    if (!upperWear || !lowerWear || !shoes) {
-      setSaveMessage("Upper, Lower, and Shoes are required to save an outfit.");
-      return;
-    }
-
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (session?.user) {
-      const { data: profile } = await supabase.from("profiles").select("username").eq("id", session.user.id).single();
-
-      if (!profile || !profile.username || profile.username.startsWith("User_")) {
-        setShowUsernameModal(true);
-        return;
-      }
-    }
-
-    try {
-      setSaveMessage("Saving...");
-      const savedOutfit = await saveOutfitToCloud({
-        upperWear,
-        lowerWear,
-        shoes,
-        accessories,
-      });
-      setNewlySavedOutfit(savedOutfit);
-
-      setSaveMessage(`${savedOutfit.name} saved securely to cloud!`);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to save outfit.";
-      setSaveMessage(message);
-    }
-  };
-
-  const handleGenerateAiTryOn = async () => {
-    const hasAccessory = accessories.length > 0;
-    if (!upperWear && !lowerWear && !shoes && !hasAccessory) {
-      setSaveMessage(
-        "Equip at least one clothing item (upper, lower, shoes, or accessories) before generating.",
-      );
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
-      setGeneratedAvatarImage(null);
-      setSaveMessage("Generating AI try-on...");
-
-      const payload = {
-        upperWearUrl: upperWear?.url || null,
-        lowerWearUrl: lowerWear?.url || null,
-        customAvatarUrl: customAvatarUrl || null,
-        shoesUrl: shoes?.url || null,
-        accessoriesUrls: accessories.map((a) => a.url),
-      };
-
-      const result = await generateAvatar(payload, betaSettings);
-      if (typeof result === "string" && result.length > 0) {
-        setGeneratedAvatarImage(result);
-        setSaveMessage("AI try-on generated!");
-      } else {
-        setSaveMessage("AI generation completed, but no preview image URL was returned.");
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to generate AI try-on.";
-      setSaveMessage(message);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleCloseBetaWarning = () => {
-    if (dontShowAgainWarning) {
-      window.localStorage.setItem("fashion-avatar:hide-beta-warning", "true");
-    }
-    setShowBetaWarning(false);
-  };
-
-  const handleDownloadImage = async () => {
-    if (!generatedAvatarImage) return;
-    try {
-      const response = await fetch(generatedAvatarImage);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `ai-tryon-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch {
-      setSaveMessage("Failed to download image.");
-    }
-  };
-
-  const handleUpdateOutfit = async () => {
-    if (!editingOutfit) return;
-    try {
-      setSaveMessage("Updating...");
-      const updatedOutfit = await updateOutfitInCloud(
-        editingOutfit.id,
-        upperWear,
-        lowerWear,
-        shoes,
-        accessories,
-      );
-      setNewlySavedOutfit(updatedOutfit);
-      setSaveMessage("Outfit updated!");
-      setEditingOutfit(null);
-    } catch {
-      setSaveMessage("Failed to update.");
-    }
-  };
-
-  const handleDiscardEdit = () => {
-    setEditingOutfit(null);
-    setUpperWear(null);
-    setLowerWear(null);
-    setShoes(null);
-    setAccessories([]);
-    setSaveMessage("Discarded changes.");
-  };
-
-  const handleClearOutfit = () => {
-    setUpperWear(null);
-    setLowerWear(null);
-    setShoes(null);
-    setAccessories([]);
-  };
+  const {
+    upperWear,
+    setUpperWear,
+    lowerWear,
+    setLowerWear,
+    shoes,
+    setShoes,
+    accessories,
+    setAccessories,
+    saveMessage,
+    newlySavedOutfit,
+    showUsernameModal,
+    setShowUsernameModal,
+    isGenerating,
+    generatedAvatarImage,
+    setGeneratedAvatarImage,
+    showBetaWarning,
+    dontShowAgainWarning,
+    setDontShowAgainWarning,
+    editingOutfit,
+    canGenerateAiTryOn,
+    handleSaveOutfit,
+    handleGenerateAiTryOn,
+    handleDownloadImage,
+    handleUpdateOutfit,
+    handleDiscardEdit,
+    handleClearOutfit,
+    handleCloseBetaWarning,
+  } = useDashboard();
 
   return (
     <main className="relative flex flex-col md:flex-row h-auto min-h-full lg:h-full w-full overflow-y-auto lg:overflow-hidden pb-24 lg:pb-0">

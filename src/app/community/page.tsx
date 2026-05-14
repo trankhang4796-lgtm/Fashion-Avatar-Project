@@ -1,125 +1,27 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { getCommunityOutfits, getSavedOutfits, toggleOutfitPublish, toggleOutfitLike, type SavedOutfit } from "@/src/utils/outfits";
-import { createClient } from "@/src/utils/supabase/client";
+import { useCommunityFeed } from "@/src/hooks/useCommunityFeed";
 
 export default function CommunityPage() {
-  const [communityOutfits, setCommunityOutfits] = useState<SavedOutfit[]>([]);
-  const [myOutfits, setMyOutfits] = useState<SavedOutfit[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [sortBy, setSortBy] = useState("newest");
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const PAGE_SIZE = 40;
 
-  const loadCommunityFeed = useCallback(async (pageNum: number, reset: boolean = false) => {
-    if (reset) setLoading(true);
-    else setLoadingMore(true);
-
-    const publicOutfits = await getCommunityOutfits(pageNum, PAGE_SIZE, sortBy);
-    
-    if (publicOutfits.length < PAGE_SIZE) setHasMore(false);
-    else setHasMore(true);
-
-    setCommunityOutfits(prev => reset ? publicOutfits : [...prev, ...publicOutfits]);
-    
-    if (reset) setLoading(false);
-    else setLoadingMore(false);
-  }, [sortBy]);
-
-  const loadMyOutfits = async () => {
-    const personalOutfits = await getSavedOutfits();
-    setMyOutfits(personalOutfits);
-  };
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getSession();
-      setCurrentUserId(data.session?.user?.id || null);
-    };
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    setPage(0);
-    loadCommunityFeed(0, true);
-    loadMyOutfits();
-  }, [sortBy, loadCommunityFeed]);
-
-  useEffect(() => {
-    const handleUpdate = () => {
-      setPage(0);
-      loadCommunityFeed(0, true);
-      loadMyOutfits();
-    };
-
-    window.addEventListener("saved-outfits-updated", handleUpdate);
-    
-    return () => {
-      window.removeEventListener("saved-outfits-updated", handleUpdate);
-    };
-  }, [loadCommunityFeed]);
-
-  const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    loadCommunityFeed(nextPage, false);
-  };
-
-  const handleTogglePublish = async (outfit: SavedOutfit) => {
-    const newPublishState = !outfit.isPublished;
-    // Optimistically update both lists
-    setMyOutfits(current => current.map(o => o.id === outfit.id ? { ...o, isPublished: newPublishState } : o));
-    if (!newPublishState) {
-      setCommunityOutfits(current => current.filter(o => o.id !== outfit.id));
-    }
-
-    try {
-      await toggleOutfitPublish(outfit.id, newPublishState);
-    } catch (err: any) {
-      alert(err.message);
-      loadCommunityFeed(0, true); // Revert on error
-      loadMyOutfits();
-    }
-  };
-
-  const handleLike = async (outfit: SavedOutfit) => {
-    if (!currentUserId) {
-      alert("Please log in to like outfits!");
-      return;
-    }
-    
-    const isLiking = !outfit.isLikedByMe;
-    const countModifier = isLiking ? 1 : -1;
-
-    // Optimistic UI Update
-    setCommunityOutfits(current => 
-      current.map(o => o.id === outfit.id ? { 
-        ...o, 
-        isLikedByMe: isLiking, 
-        likesCount: (o.likesCount || 0) + countModifier 
-      } : o)
-    );
-
-    try {
-      await toggleOutfitLike(outfit.id, !isLiking);
-    } catch (err) {
-      console.error("Failed to toggle like", err);
-      loadCommunityFeed(page, true); // Revert on error
-    }
-  };
-
-  const filteredOutfits = communityOutfits.filter((outfit) =>
-    outfit.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const {
+    myOutfits,
+    searchQuery,
+    setSearchQuery,
+    currentUserId,
+    hasMore,
+    loading,
+    loadingMore,
+    sortBy,
+    setSortBy,
+    filteredOutfits,
+    handleLoadMore,
+    handleTogglePublish,
+    handleLike,
+  } = useCommunityFeed();
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 relative h-[calc(100vh-73px)] flex flex-col overflow-hidden">
@@ -138,7 +40,7 @@ export default function CommunityPage() {
             />
             <span className="absolute right-4 top-3.5 text-slate-400">🔍</span>
           </div>
-          <select 
+          <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="rounded-xl border border-border-theme bg-surface px-4 py-3 text-sm text-foreground shadow-sm focus:border-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-mint/50"
@@ -152,6 +54,7 @@ export default function CommunityPage() {
 
       <div className="absolute right-6 top-10 md:top-20 z-10">
         <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 rounded-full bg-brand-forest px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-brand-darkgreen transition-transform hover:scale-105"
         >
@@ -165,19 +68,25 @@ export default function CommunityPage() {
         ) : filteredOutfits.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border-theme bg-surface px-6 py-16 text-center mt-10">
             <h3 className="text-lg font-semibold text-foreground">No outfits found</h3>
-            <p className="mt-2 text-sm text-foreground/70">Try a different search term or be the first to publish an outfit!</p>
+            <p className="mt-2 text-sm text-foreground/70">
+              Try a different search term or be the first to publish an outfit!
+            </p>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredOutfits.map((outfit) => (
-                <article key={outfit.id} className="rounded-2xl border border-border-theme bg-surface p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                <article
+                  key={outfit.id}
+                  className="rounded-2xl border border-border-theme bg-surface p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                >
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="font-semibold text-foreground truncate pr-2">{outfit.name}</h3>
-                    <span className="text-xs bg-surface-alt border border-border-theme text-foreground/70 px-2 py-1 rounded-full shrink-0">@{outfit.authorName}</span>
+                    <span className="text-xs bg-surface-alt border border-border-theme text-foreground/70 px-2 py-1 rounded-full shrink-0">
+                      @{outfit.authorName}
+                    </span>
                   </div>
-                  
-                  {/* Vertically Stacked Images */}
+
                   <div className="flex flex-col gap-2 mb-4 flex-1">
                     <div className="relative aspect-[4/3] w-full rounded-xl bg-surface-alt border border-border-theme overflow-hidden">
                       {outfit.upperWearImage ? (
@@ -207,8 +116,17 @@ export default function CommunityPage() {
                       ) : (
                         <div className="grid grid-cols-4 gap-1">
                           {outfit.accessoryImages.slice(0, 4).map((image, index) => (
-                            <div key={`${outfit.id}-community-accessory-${index}`} className="relative aspect-square overflow-hidden rounded border border-border-theme bg-surface">
-                              <Image src={image} alt={`Accessory ${index + 1}`} fill className="object-contain p-1" unoptimized />
+                            <div
+                              key={`${outfit.id}-community-accessory-${index}`}
+                              className="relative aspect-square overflow-hidden rounded border border-border-theme bg-surface"
+                            >
+                              <Image
+                                src={image}
+                                alt={`Accessory ${index + 1}`}
+                                fill
+                                className="object-contain p-1"
+                                unoptimized
+                              />
                             </div>
                           ))}
                         </div>
@@ -216,20 +134,22 @@ export default function CommunityPage() {
                     </div>
                   </div>
 
-                  {/* Card Footer: Interactions */}
                   <div className="pt-3 border-t border-border-theme flex items-center justify-between mt-auto">
-                    <button 
-                      onClick={() => handleLike(outfit)}
-                      className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${outfit.isLikedByMe ? 'text-red-500' : 'text-foreground/70 hover:text-red-500'}`}
+                    <button
+                      type="button"
+                      onClick={() => void handleLike(outfit)}
+                      className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                        outfit.isLikedByMe ? "text-red-500" : "text-foreground/70 hover:text-red-500"
+                      }`}
                     >
-                      <span>{outfit.isLikedByMe ? '❤️' : '🤍'}</span>
+                      <span>{outfit.isLikedByMe ? "❤️" : "🤍"}</span>
                       <span>{outfit.likesCount || 0}</span>
                     </button>
 
-                    {/* Direct Remove Button for Owners */}
                     {currentUserId === outfit.userId && (
-                      <button 
-                        onClick={() => handleTogglePublish(outfit)}
+                      <button
+                        type="button"
+                        onClick={() => void handleTogglePublish(outfit)}
                         className="text-xs font-medium text-foreground/60 hover:text-red-600 transition-colors"
                       >
                         Remove
@@ -239,10 +159,11 @@ export default function CommunityPage() {
                 </article>
               ))}
             </div>
-            
+
             {hasMore && !searchQuery && (
               <div className="mt-10 flex justify-center">
-                <button 
+                <button
+                  type="button"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
                   className="rounded-full border border-border-theme bg-surface px-8 py-3 text-sm font-semibold text-foreground shadow-sm hover:bg-surface-alt disabled:opacity-50 transition-colors"
@@ -255,24 +176,35 @@ export default function CommunityPage() {
         )}
       </div>
 
-      {/* Add Outfit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-xl font-bold text-slate-900">Publish your outfits</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold"
+              >
+                &times;
+              </button>
             </div>
             <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
               {myOutfits.length === 0 ? (
-                <p className="text-center text-slate-500 py-10">You haven't saved any outfits yet. Head to the Dashboard to create one!</p>
+                <p className="text-center text-slate-500 py-10">
+                  You haven&apos;t saved any outfits yet. Head to the Dashboard to create one!
+                </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {myOutfits.map((outfit) => (
-                    <div key={outfit.id} className="border border-slate-200 rounded-xl p-3 flex justify-between items-center bg-slate-50">
+                    <div
+                      key={outfit.id}
+                      className="border border-slate-200 rounded-xl p-3 flex justify-between items-center bg-slate-50"
+                    >
                       <span className="font-medium text-slate-800 truncate pr-2">{outfit.name}</span>
                       <button
-                        onClick={() => handleTogglePublish(outfit)}
+                        type="button"
+                        onClick={() => void handleTogglePublish(outfit)}
                         className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
                           outfit.isPublished
                             ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
@@ -292,4 +224,3 @@ export default function CommunityPage() {
     </main>
   );
 }
-

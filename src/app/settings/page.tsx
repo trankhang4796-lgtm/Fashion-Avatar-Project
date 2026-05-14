@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { createClient } from "@/src/utils/supabase/client";
 import { useWardrobe } from "@/src/context/WardrobeContext";
-import { validateUsername, RESTRICTED_WORDS } from "@/src/utils/validation";
 import type { User } from "@supabase/supabase-js";
 import ProfileTab from "@/src/settings/components/ProfileTab";
 import SecurityTab from "@/src/settings/components/SecurityTab";
@@ -21,7 +20,6 @@ type SettingsTab = "account" | "privacy" | "appearance" | "preferences" | "beta"
 
 function SettingsContent() {
   const supabase = useMemo(() => createClient(), []);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { setCustomAvatarUrl } = useWardrobe();
   const [user, setUser] = useState<User | null>(null);
@@ -34,25 +32,6 @@ function SettingsContent() {
     return `fashion-avatar:settings:beta:${idPart}`;
   }, [user?.id]);
 
-  const [username, setUsername] = useState("");
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [usernameInput, setUsernameInput] = useState("");
-  const [usernameMessage, setUsernameMessage] = useState({ type: "", text: "" });
-  const [isLengthValid, setIsLengthValid] = useState(false);
-  const [isFormatValid, setIsFormatValid] = useState(false);
-  const [profanityError, setProfanityError] = useState("");
-  const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "taken">("idle");
-
-  const [passwordFlow, setPasswordFlow] = useState<"idle" | "editing">("idle");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState({ type: "", text: "" });
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [passwordLengthValid, setPasswordLengthValid] = useState(false);
-  const [passwordUpperLowerValid, setPasswordUpperLowerValid] = useState(false);
-  const [passwordNumberSpecialValid, setPasswordNumberSpecialValid] = useState(false);
-  const [passwordsMatch, setPasswordsMatch] = useState(false);
-
   const [isPublicProfile, setIsPublicProfile] = useState(true);
 
   const [defaultWardrobeView, setDefaultWardrobeView] =
@@ -61,9 +40,6 @@ function SettingsContent() {
   const [askBeforeCamera, setAskBeforeCamera] = useState(true);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const [betaFeaturesEnabled, setBetaFeaturesEnabled] = useState(false);
   const [betaFastAiGeneration, setBetaFastAiGeneration] = useState(false);
@@ -165,19 +141,9 @@ function SettingsContent() {
 
           const { data: profile } = await supabase
             .from("profiles")
-            .select("username, is_public")
+            .select("is_public")
             .eq("id", session.user.id)
             .single();
-
-          if (profile?.username) {
-            setUsername(profile.username);
-            setUsernameInput(profile.username);
-          } else {
-            const randomName = `User_${Math.floor(Math.random() * 10000)}`;
-            setUsername(randomName);
-            setUsernameInput(randomName);
-            await supabase.from("profiles").upsert({ id: session.user.id, username: randomName });
-          }
 
           setIsPublicProfile(profile?.is_public ?? true);
         }
@@ -189,140 +155,6 @@ function SettingsContent() {
     };
     loadUser();
   }, [supabase]);
-
-  useEffect(() => {
-    if (!isEditingUsername) return;
-
-    const trimmed = usernameInput.trim();
-
-    setIsLengthValid(trimmed.length >= 3 && trimmed.length <= 20);
-
-    const validFormatRegex = /^[a-zA-Z0-9_.]+$/;
-    const hasGoodPunctuation =
-      !trimmed.startsWith(".") &&
-      !trimmed.startsWith("_") &&
-      !trimmed.endsWith(".") &&
-      !trimmed.endsWith("_") &&
-      !trimmed.includes("..") &&
-      !trimmed.includes("__") &&
-      !trimmed.includes("._") &&
-      !trimmed.includes("_.");
-    setIsFormatValid(validFormatRegex.test(trimmed) && hasGoodPunctuation);
-
-    const normalized = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const isProfane = RESTRICTED_WORDS.some((word) => normalized.includes(word));
-    if (isProfane) {
-      setProfanityError("This username contains restricted words.");
-    } else {
-      setProfanityError("");
-    }
-
-    setAvailability("idle");
-
-    if (trimmed.length < 3 || isProfane || !validFormatRegex.test(trimmed) || !hasGoodPunctuation) {
-      return;
-    }
-
-    if (trimmed === username) {
-      setAvailability("available");
-      return;
-    }
-
-    setAvailability("checking");
-
-    const timeoutId = setTimeout(async () => {
-      const { data } = await supabase.from("profiles").select("id").eq("username", trimmed).single();
-
-      if (data && data.id !== user?.id) {
-        setAvailability("taken");
-      } else {
-        setAvailability("available");
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [usernameInput, isEditingUsername, user?.id, username, supabase]);
-
-  useEffect(() => {
-    if (passwordFlow !== "editing") return;
-
-    setPasswordLengthValid(newPassword.length >= 8);
-    setPasswordUpperLowerValid(/[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword));
-    setPasswordNumberSpecialValid(/\d/.test(newPassword) && /[^a-zA-Z0-9]/.test(newPassword));
-
-    setPasswordsMatch(newPassword.length > 0 && newPassword === confirmPassword);
-  }, [newPassword, confirmPassword, passwordFlow]);
-
-  const handleUpdateUsername = async () => {
-    setUsernameMessage({ type: "", text: "" });
-
-    const newName = usernameInput.trim();
-
-    const validation = validateUsername(newName);
-    if (!validation.isValid) {
-      setUsernameMessage({ type: "error", text: validation.error });
-      return;
-    }
-
-    const { data: existing } = await supabase.from("profiles").select("id").eq("username", newName).single();
-
-    if (existing && existing.id !== user?.id) {
-      setUsernameMessage({ type: "error", text: "That username is already taken!" });
-      return;
-    }
-
-    const { error } = await supabase.from("profiles").upsert({ id: user?.id, username: newName });
-
-    if (error) {
-      setUsernameMessage({ type: "error", text: "Failed to update username." });
-    } else {
-      setUsername(newName);
-      window.dispatchEvent(new Event("profile-updated"));
-      setIsEditingUsername(false);
-      setUsernameMessage({ type: "success", text: "Username updated successfully!" });
-    }
-  };
-
-  const handleStartPasswordChange = () => {
-    if (window.confirm("Are you sure you want to change your password?")) {
-      setPasswordFlow("editing");
-    }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordMessage({ type: "", text: "" });
-
-    if (newPassword.length < 8) {
-      setPasswordMessage({ type: "error", text: "Password must be at least 8 characters." });
-      return;
-    }
-    if (!(/[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword))) {
-      setPasswordMessage({ type: "error", text: "Password must include both uppercase and lowercase letters." });
-      return;
-    }
-    if (!(/\d/.test(newPassword) && /[^a-zA-Z0-9]/.test(newPassword))) {
-      setPasswordMessage({ type: "error", text: "Password must include a number and a special character." });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: "error", text: "Passwords do not match." });
-      return;
-    }
-
-    setIsUpdatingPassword(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setIsUpdatingPassword(false);
-
-    if (error) {
-      setPasswordMessage({ type: "error", text: error.message });
-    } else {
-      setPasswordMessage({ type: "success", text: "Password updated successfully!" });
-      setPasswordFlow("idle");
-      setNewPassword("");
-      setConfirmPassword("");
-    }
-  };
 
   if (loading) return <main className="mx-auto max-w-5xl px-6 py-10">Loading...</main>;
   if (!user) return <main className="mx-auto max-w-5xl px-6 py-10">Please log in to view settings.</main>;
@@ -361,45 +193,8 @@ function SettingsContent() {
         <section className="flex-1">
           {activeTab === "account" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <ProfileTab
-                supabase={supabase}
-                router={router}
-                setTheme={setTheme}
-                username={username}
-                usernameInput={usernameInput}
-                setUsernameInput={setUsernameInput}
-                isEditingUsername={isEditingUsername}
-                setIsEditingUsername={setIsEditingUsername}
-                isLengthValid={isLengthValid}
-                isFormatValid={isFormatValid}
-                profanityError={profanityError}
-                availability={availability}
-                usernameMessage={usernameMessage}
-                handleUpdateUsername={handleUpdateUsername}
-                isDeletingAccount={isDeletingAccount}
-                setIsDeletingAccount={setIsDeletingAccount}
-                confirmText={confirmText}
-                setConfirmText={setConfirmText}
-                isProcessing={isProcessing}
-                setIsProcessing={setIsProcessing}
-              />
-              <SecurityTab
-                passwordFlow={passwordFlow}
-                setPasswordFlow={setPasswordFlow}
-                newPassword={newPassword}
-                setNewPassword={setNewPassword}
-                confirmPassword={confirmPassword}
-                setConfirmPassword={setConfirmPassword}
-                passwordMessage={passwordMessage}
-                setPasswordMessage={setPasswordMessage}
-                isUpdatingPassword={isUpdatingPassword}
-                passwordLengthValid={passwordLengthValid}
-                passwordUpperLowerValid={passwordUpperLowerValid}
-                passwordNumberSpecialValid={passwordNumberSpecialValid}
-                passwordsMatch={passwordsMatch}
-                handleStartPasswordChange={handleStartPasswordChange}
-                handleUpdatePassword={handleUpdatePassword}
-              />
+              <ProfileTab supabase={supabase} user={user} />
+              <SecurityTab supabase={supabase} />
             </div>
           )}
 
