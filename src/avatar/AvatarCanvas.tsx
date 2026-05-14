@@ -33,14 +33,7 @@ const slotBaseClasses =
 function getOutfitSlotImageClass(
   slot: "upper" | "lower" | "shoes" | "accessory",
 ) {
-  const baseClass =
-    "object-contain transition-transform duration-200 will-change-transform";
-
-  if (slot === "upper") return `${baseClass} scale-[1.38]`;
-  if (slot === "lower") return `${baseClass} scale-[1.45]`;
-  if (slot === "shoes") return `${baseClass} scale-[1.6]`;
-
-  return `${baseClass} scale-110`;
+  return "object-contain p-3 sm:p-4 transition-transform duration-200 will-change-transform";
 }
 
 export default function AvatarCanvas({
@@ -77,8 +70,8 @@ export default function AvatarCanvas({
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleGlobalDrop}
     >
-      <div className="flex h-auto lg:h-[85vh] lg:max-h-[850px] w-full max-w-5xl flex-col lg:flex-row gap-4 lg:gap-6 items-center lg:items-start rounded-3xl border-4 border-slate-800 bg-white p-4 sm:p-6 shadow-xl dark:bg-surface">
-        <div className="w-full max-w-[340px] h-[400px] sm:h-[500px] lg:h-[640px] shrink-0 rounded-2xl overflow-hidden relative bg-white border border-border-theme dark:bg-surface-alt">
+      <div className="flex h-auto w-fit max-w-full flex-col lg:flex-row gap-3 lg:gap-4 items-center lg:items-start rounded-3xl border-4 border-slate-800 bg-white p-3 sm:p-4 shadow-xl dark:bg-surface">
+        <div className="w-[320px] max-w-full h-[400px] sm:h-[480px] lg:h-[600px] shrink-0 rounded-2xl overflow-hidden relative bg-white border border-border-theme dark:bg-surface-alt">
           {customAvatarUrl ? (
             <Image
               src={customAvatarUrl}
@@ -86,7 +79,7 @@ export default function AvatarCanvas({
               fill
               unoptimized
               className="object-contain p-2"
-              sizes="340px"
+              sizes="320px"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-center">
@@ -97,10 +90,10 @@ export default function AvatarCanvas({
           )}
         </div>
 
-        <div className="grid w-full max-w-[340px] lg:max-w-none grid-cols-2 lg:grid-cols-[260px_140px] gap-3 lg:gap-4">
+        <div className="grid w-full max-w-[320px] lg:max-w-none grid-cols-2 lg:grid-cols-[240px_130px] gap-3 lg:gap-4">
           <div
             className={
-              "col-span-1 lg:col-start-1 lg:row-start-1 h-[180px] lg:h-[220px] relative flex items-center justify-center " +
+              "col-span-1 lg:col-start-1 lg:row-start-1 h-[200px] relative flex items-center justify-center " +
               slotBaseClasses
             }
           >
@@ -111,7 +104,7 @@ export default function AvatarCanvas({
                 fill
                 unoptimized
                 className={getOutfitSlotImageClass("upper")}
-                sizes="260px"
+                sizes="240px"
               />
             ) : (
               <span className="text-lg font-semibold text-slate-400">Upper</span>
@@ -120,7 +113,7 @@ export default function AvatarCanvas({
 
           <div
             className={
-              "col-span-1 lg:col-start-2 lg:row-start-1 h-[180px] lg:h-[220px] relative flex items-center justify-center " +
+              "col-span-1 lg:col-start-2 lg:row-start-1 h-[200px] relative flex items-center justify-center " +
               slotBaseClasses +
               (accessories.length > 0 ? " p-2" : "")
             }
@@ -140,7 +133,7 @@ export default function AvatarCanvas({
                       fill
                       unoptimized
                       className={getOutfitSlotImageClass("accessory")}
-                      sizes="68px"
+                      sizes="240px"
                     />
                   </div>
                 ))}
@@ -150,7 +143,7 @@ export default function AvatarCanvas({
 
           <div
             className={
-              "col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-2 h-[200px] lg:h-[260px] relative flex items-center justify-center " +
+              "col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-2 h-[220px] lg:h-[250px] relative flex items-center justify-center " +
               slotBaseClasses
             }
           >
@@ -161,7 +154,7 @@ export default function AvatarCanvas({
                 fill
                 unoptimized
                 className={getOutfitSlotImageClass("lower")}
-                sizes="260px"
+                sizes="240px"
               />
             ) : (
               <span className="text-lg font-semibold text-slate-400">Lower</span>
@@ -170,7 +163,7 @@ export default function AvatarCanvas({
 
           <div
             className={
-              "col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-3 h-[100px] lg:h-[128px] relative flex items-center justify-center " +
+              "col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-3 h-[120px] lg:h-[118px] relative flex items-center justify-center " +
               slotBaseClasses
             }
           >
@@ -181,7 +174,7 @@ export default function AvatarCanvas({
                 fill
                 unoptimized
                 className={getOutfitSlotImageClass("shoes")}
-                sizes="260px"
+                sizes="240px"
               />
             ) : (
               <span className="text-base font-semibold text-slate-400">Shoes</span>

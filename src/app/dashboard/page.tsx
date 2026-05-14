@@ -139,6 +139,24 @@ export default function DashboardPage() {
     setShowBetaWarning(false);
   };
 
+  const handleDownloadImage = async () => {
+    if (!generatedAvatarImage) return;
+    try {
+      const response = await fetch(generatedAvatarImage);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ai-tryon-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setSaveMessage("Failed to download image.");
+    }
+  };
+
   return (
     <main className="relative flex flex-col md:flex-row h-auto min-h-full lg:h-full w-full overflow-y-auto lg:overflow-hidden pb-24 lg:pb-0">
       {/* Wardrobe – left sliding sidebar */}
@@ -278,13 +296,22 @@ export default function DashboardPage() {
                     Review the generated result. Close to discard this preview.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setGeneratedAvatarImage(null)}
-                  className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-surface-alt"
-                >
-                  Close / Discard
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDownloadImage}
+                    className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-darkgreen"
+                  >
+                    ↓ Download
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGeneratedAvatarImage(null)}
+                    className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-surface-alt"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
 
               <div className="p-5">

@@ -76,6 +76,7 @@ export function WardrobeProvider({ children }: { children: ReactNode }) {
       (event: AuthChangeEvent, session: Session | null) => {
         if (event === "SIGNED_OUT") {
           setItems([]); // Clear items instantly so they don't leak into guest storage
+          setCustomAvatarUrl(null);
         }
         setUserId(session?.user?.id ?? null);
       },

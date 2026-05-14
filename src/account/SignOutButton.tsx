@@ -12,6 +12,7 @@ export default function SignOutButton() {
     } finally {
       // Forcefully clear browser state and return to landing page
       localStorage.removeItem("fashion-avatar-wardrobe-guest");
+      localStorage.removeItem("fashion-avatar-custom-avatar-guest");
       localStorage.removeItem("theme");
       window.location.href = "/";
     }
