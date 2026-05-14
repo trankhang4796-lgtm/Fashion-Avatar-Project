@@ -33,7 +33,7 @@ export default function CommunityPage() {
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search outfits by name..."
+              placeholder="Search outfits or creators..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-border-theme bg-surface px-5 py-3 pr-10 text-sm text-foreground shadow-sm focus:border-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-mint/50"

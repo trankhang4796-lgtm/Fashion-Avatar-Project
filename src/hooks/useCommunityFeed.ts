@@ -139,13 +139,16 @@ export function useCommunityFeed() {
     [currentUserId, loadCommunityFeed],
   );
 
-  const filteredOutfits = useMemo(
-    () =>
-      communityOutfits.filter((outfit) =>
-        outfit.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
-    [communityOutfits, searchQuery],
-  );
+  const filteredOutfits = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return communityOutfits;
+
+    return communityOutfits.filter((outfit) => {
+      const name = (outfit.name ?? "").toLowerCase();
+      const author = (outfit.authorName ?? "").toLowerCase();
+      return name.includes(q) || author.includes(q);
+    });
+  }, [communityOutfits, searchQuery]);
 
   return {
     myOutfits,
