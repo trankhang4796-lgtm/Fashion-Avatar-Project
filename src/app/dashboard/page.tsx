@@ -254,6 +254,19 @@ export default function DashboardPage() {
                 >
                   Save Outfit
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpperWear(null);
+                    setLowerWear(null);
+                    setShoes(null);
+                    setAccessories([]);
+                  }}
+                  className="rounded-lg border border-border-theme bg-surface px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 transition-colors"
+                  title="Remove all clothing"
+                >
+                  Clear
+                </button>
               </>
             )}
           </div>

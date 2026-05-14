@@ -31,10 +31,10 @@ const slotBaseClasses =
   "group relative overflow-hidden rounded-2xl border-4 border-dashed border-slate-300 bg-slate-50 transition-colors hover:bg-slate-100";
 
 const getAccessoryItemSize = (count: number) => {
-  if (count <= 1) return 96;
-  if (count === 2) return 78;
-  if (count <= 4) return 62;
-  return 48;
+  if (count <= 1) return 112; // Increased from 96
+  if (count === 2) return 92; // Increased from 78
+  if (count <= 4) return 72; // Increased from 62
+  return 56; // Increased from 48
 };
 
 function getOutfitSlotImageClass(
@@ -46,6 +46,9 @@ function getOutfitSlotImageClass(
 
   return "object-contain p-3 sm:p-4 transition-transform duration-200 will-change-transform";
 }
+
+const removeButtonClass =
+  "absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/40 text-xs text-white backdrop-blur-sm transition-all duration-200 md:opacity-0 md:group-hover:opacity-100 hover:bg-red-500/90";
 
 export default function AvatarCanvas({
   upperWear,
@@ -110,14 +113,29 @@ export default function AvatarCanvas({
             }
           >
             {upperWear ? (
-              <Image
-                src={upperWear.url}
-                alt="Upper wear"
-                fill
-                unoptimized
-                className={getOutfitSlotImageClass("upper")}
-                sizes="240px"
-              />
+              <>
+                <Image
+                  src={upperWear.url}
+                  alt="Upper wear"
+                  fill
+                  unoptimized
+                  className={`${getOutfitSlotImageClass("upper")} pointer-events-none`}
+                  sizes="240px"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onUpperWearChange(null);
+                  }}
+                  className={removeButtonClass}
+                  aria-label="Remove upper wear"
+                  title="Remove upper wear"
+                >
+                  ✕
+                </button>
+              </>
             ) : (
               <span className="text-lg font-semibold text-slate-400">Upper</span>
             )}
@@ -126,7 +144,9 @@ export default function AvatarCanvas({
           <div
             className={
               "col-span-2 lg:col-span-1 lg:col-start-2 lg:row-start-1 min-h-[160px] h-[200px] relative flex items-center justify-center " +
-              slotBaseClasses +
+              (accessories.length > 0
+                ? slotBaseClasses.replace(/\bgroup\s+/, "")
+                : slotBaseClasses) +
               (accessories.length > 0 ? " p-2" : "")
             }
           >
@@ -137,7 +157,7 @@ export default function AvatarCanvas({
                 {accessories.map((item) => (
                   <div
                     key={item.id}
-                    className="relative aspect-square overflow-hidden rounded-md border border-slate-200 bg-white"
+                    className="group relative aspect-square overflow-hidden rounded-md border border-slate-200 bg-white"
                     style={{
                       width: accessoryItemSize,
                       height: accessoryItemSize,
@@ -148,9 +168,24 @@ export default function AvatarCanvas({
                       alt="Accessory"
                       fill
                       unoptimized
-                      className={getOutfitSlotImageClass("accessory")}
+                      className={`${getOutfitSlotImageClass("accessory")} pointer-events-none`}
                       sizes={`${accessoryItemSize}px`}
                     />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onAccessoriesChange(
+                          accessories.filter((a) => a.id !== item.id),
+                        );
+                      }}
+                      className={`${removeButtonClass} md:opacity-0 md:group-hover:opacity-100`}
+                      aria-label="Remove accessory"
+                      title="Remove accessory"
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))}
               </div>
@@ -164,14 +199,29 @@ export default function AvatarCanvas({
             }
           >
             {lowerWear ? (
-              <Image
-                src={lowerWear.url}
-                alt="Lower wear"
-                fill
-                unoptimized
-                className={getOutfitSlotImageClass("lower")}
-                sizes="240px"
-              />
+              <>
+                <Image
+                  src={lowerWear.url}
+                  alt="Lower wear"
+                  fill
+                  unoptimized
+                  className={`${getOutfitSlotImageClass("lower")} pointer-events-none`}
+                  sizes="240px"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onLowerWearChange(null);
+                  }}
+                  className={removeButtonClass}
+                  aria-label="Remove lower wear"
+                  title="Remove lower wear"
+                >
+                  ✕
+                </button>
+              </>
             ) : (
               <span className="text-lg font-semibold text-slate-400">Lower</span>
             )}
@@ -184,14 +234,29 @@ export default function AvatarCanvas({
             }
           >
             {shoes ? (
-              <Image
-                src={shoes.url}
-                alt="Shoes"
-                fill
-                unoptimized
-                className={getOutfitSlotImageClass("shoes")}
-                sizes="240px"
-              />
+              <>
+                <Image
+                  src={shoes.url}
+                  alt="Shoes"
+                  fill
+                  unoptimized
+                  className={`${getOutfitSlotImageClass("shoes")} pointer-events-none`}
+                  sizes="240px"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onShoesChange(null);
+                  }}
+                  className={removeButtonClass}
+                  aria-label="Remove shoes"
+                  title="Remove shoes"
+                >
+                  ✕
+                </button>
+              </>
             ) : (
               <span className="text-base font-semibold text-slate-400">Shoes</span>
             )}

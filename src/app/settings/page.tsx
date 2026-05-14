@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { createClient } from "@/src/utils/supabase/client";
+import { useWardrobe } from "@/src/context/WardrobeContext";
 import { deleteUserAccountPermanently } from "@/src/app/actions/auth";
 import { validateUsername, RESTRICTED_WORDS } from "@/src/utils/validation";
 import type { User } from "@supabase/supabase-js";
@@ -14,6 +15,7 @@ function SettingsContent() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setCustomAvatarUrl } = useWardrobe();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
@@ -801,6 +803,7 @@ function SettingsContent() {
                           setBetaFeaturesEnabled(enabled);
                           if (!enabled) {
                             setBetaFastAiGeneration(false);
+                            setCustomAvatarUrl(null);
                             window.localStorage.removeItem(
                               "fashion-avatar:hide-beta-warning",
                             );
