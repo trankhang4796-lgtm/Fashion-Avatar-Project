@@ -45,6 +45,51 @@ async function convertHeicToPng(file: File): Promise<Blob> {
   return Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
 }
 
+/**
+ * Downscales raster images so the longest side is at most 1024px before WASM
+ * background removal, reducing main-thread stalls on large uploads.
+ */
+async function downscaleImageMaxDimension1024(source: File | Blob): Promise<Blob> {
+  const bitmap = await createImageBitmap(source);
+  try {
+    const w = bitmap.width;
+    const h = bitmap.height;
+    const maxDim = Math.max(w, h);
+    if (maxDim <= 1024) {
+      const buf = await source.arrayBuffer();
+      return new Blob([buf], {
+        type:
+          (source instanceof File ? source.type : source.type) || "image/jpeg",
+      });
+    }
+
+    const scale = 1024 / maxDim;
+    const tw = Math.round(w * scale);
+    const th = Math.round(h * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = tw;
+    canvas.height = th;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Unable to get canvas 2d context");
+    }
+    ctx.drawImage(bitmap, 0, 0, tw, th);
+
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("Canvas toBlob failed"));
+        },
+        "image/jpeg",
+        0.92,
+      );
+    });
+  } finally {
+    bitmap.close();
+  }
+}
+
 const ALLOWED_EXTENSIONS = [
   ".heic",
   ".heif",
@@ -114,7 +159,17 @@ export default function WardrobeUploader({
       );
     }
 
-    const imageBlob = await removeBackground(processedFile, {
+    const scaledBlob = await downscaleImageMaxDimension1024(processedFile);
+    const baseName = processedFile.name.replace(/\.[^/.]+$/, "") || "image";
+    const fileForBackgroundRemoval = new File([scaledBlob], `${baseName}-prebg.jpg`, {
+      type: scaledBlob.type.startsWith("image/") ? scaledBlob.type : "image/jpeg",
+    });
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 100);
+    });
+
+    const imageBlob = await removeBackground(fileForBackgroundRemoval, {
       progress: (key, current, total) => {
         const percentage = Math.round((current / total) * 100);
         setProgressPercent(percentage);
