@@ -19,6 +19,7 @@ export default function AccountMenu() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -100,8 +101,11 @@ export default function AccountMenu() {
             if (profile?.theme) setTheme(profile.theme);
             setWelcomeMessage(`Welcome back, ${name}!`);
 
-            setTimeout(() => {
-              if (isMounted) setWelcomeMessage("");
+            if (toastTimeoutRef.current) {
+              clearTimeout(toastTimeoutRef.current);
+            }
+            toastTimeoutRef.current = setTimeout(() => {
+              setWelcomeMessage("");
             }, 4000);
           };
           fetchProfile();
@@ -114,6 +118,7 @@ export default function AccountMenu() {
 
     return () => {
       isMounted = false;
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       subscription.unsubscribe();
     };
   }, [supabase, setTheme]);
