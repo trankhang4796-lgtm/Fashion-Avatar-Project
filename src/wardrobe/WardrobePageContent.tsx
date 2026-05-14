@@ -6,24 +6,21 @@ import SavedOutfitsSection from "./SavedOutfitsSection";
 import WardrobeGrid from "./WardrobeGrid";
 import WardrobeUploader from "./WardrobeUploader";
 import { getSavedOutfits, subscribeToSavedOutfits } from "@/src/utils/outfits";
+import {
+  clothingFilters,
+  filterClothingItems,
+  type ClothingFilterValue,
+} from "./clothingFilters";
 
 type WardrobeTab = "saved-items" | "saved-outfits";
-type SavedItemsFilter = "all" | "upper" | "lower" | "shoes" | "accessories";
-
-const savedItemsFilterTabs: Array<{ key: SavedItemsFilter; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "upper", label: "Upper-wear" },
-  { key: "lower", label: "Lower-wear" },
-  { key: "shoes", label: "Shoes" },
-  { key: "accessories", label: "Accessories" },
-];
 
 export default function WardrobePageContent() {
   const { items, isLoaded, removeItem } = useWardrobe();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<WardrobeTab>("saved-items");
-  const [savedItemsFilter, setSavedItemsFilter] = useState<SavedItemsFilter>("all");
+  const [savedItemsFilter, setSavedItemsFilter] =
+    useState<ClothingFilterValue>("all");
   const [savedOutfitsCount, setSavedOutfitsCount] = useState(0);
 
   useEffect(() => {
@@ -75,10 +72,7 @@ export default function WardrobePageContent() {
     };
   }, []);
 
-  const filteredItems =
-    savedItemsFilter === "all"
-      ? items
-      : items.filter((item) => item.type === savedItemsFilter);
+  const filteredItems = filterClothingItems(items, savedItemsFilter);
 
   return (
     <main className="relative mx-auto max-w-6xl px-6 py-10">
@@ -144,13 +138,13 @@ export default function WardrobePageContent() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {savedItemsFilterTabs.map((filterOption) => (
+              {clothingFilters.map((filterOption) => (
                 <button
-                  key={filterOption.key}
+                  key={filterOption.value}
                   type="button"
-                  onClick={() => setSavedItemsFilter(filterOption.key)}
+                  onClick={() => setSavedItemsFilter(filterOption.value)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                    savedItemsFilter === filterOption.key
+                    savedItemsFilter === filterOption.value
                       ? "border-brand-mint bg-brand-mint/15 text-foreground"
                       : "border-border-theme bg-surface text-foreground/70 hover:text-foreground"
                   }`}

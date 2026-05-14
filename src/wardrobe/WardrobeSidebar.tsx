@@ -12,6 +12,11 @@ import {
   toggleOutfitPublish,
   type SavedOutfit,
 } from "@/src/utils/outfits";
+import {
+  clothingFilters,
+  filterClothingItems,
+  type ClothingFilterValue,
+} from "./clothingFilters";
 import ImageGrid from "./ImageGrid";
 import WardrobeUploader from "./WardrobeUploader";
 import type { WardrobeItem } from "./types";
@@ -46,6 +51,8 @@ export default function WardrobeSidebar({
 }: WardrobeSidebarProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"clothes" | "outfits">("clothes");
+  const [selectedClothingFilter, setSelectedClothingFilter] =
+    useState<ClothingFilterValue>("all");
   const [stagedItems, setStagedItems] = useState<WardrobeItem[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
@@ -66,6 +73,8 @@ export default function WardrobeSidebar({
     editingOutfit,
     setEditingOutfit,
   } = useWardrobe();
+
+  const filteredClothes = filterClothingItems(items, selectedClothingFilter);
 
   const handleRemoveItem = (id: string) => {
     setItemToDelete(id);
@@ -238,6 +247,29 @@ export default function WardrobeSidebar({
           Outfits
         </button>
       </div>
+
+      {activeTab === "clothes" ? (
+        <div className="mb-3 flex shrink-0 flex-wrap items-center gap-2">
+          {clothingFilters.map((filter) => {
+            const isSelected = selectedClothingFilter === filter.value;
+
+            return (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setSelectedClothingFilter(filter.value)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  isSelected
+                    ? "border-brand-forest bg-brand-forest text-white"
+                    : "border-border-theme bg-background text-foreground/60 hover:bg-surface-alt hover:text-foreground"
+                }`}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -449,10 +481,14 @@ export default function WardrobeSidebar({
           <p className="rounded-lg border border-dashed border-slate-300 bg-surface p-4 text-sm text-slate-500">
             No clothes added yet.
           </p>
+        ) : filteredClothes.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border-theme bg-surface p-4 text-sm text-foreground/60">
+            No clothes in this category.
+          </p>
         ) : (
             <ImageGrid
               key={user?.id ?? "guest"}
-              images={items}
+              images={filteredClothes}
               onRemove={handleRemoveItem}
               selectedItemIds={stagedItems.map((i) => i.id)}
               onItemToggle={handleItemToggle}
