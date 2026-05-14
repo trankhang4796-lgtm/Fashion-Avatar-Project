@@ -14,7 +14,7 @@ import PreferencesTab from "@/src/settings/components/PreferencesTab";
 import AppearanceTab from "@/src/settings/components/AppearanceTab";
 import BetaTab from "@/src/settings/components/BetaTab";
 
-type SettingsTab = "account" | "privacy" | "appearance" | "notifications" | "preferences" | "beta";
+type SettingsTab = "account" | "privacy" | "appearance" | "preferences" | "beta";
 
 function SettingsContent() {
   const supabase = useMemo(() => createClient(), []);
@@ -68,7 +68,7 @@ function SettingsContent() {
   useEffect(() => {
     const tabParam = searchParams.get("tab");
 
-    const validTabs = ["account", "privacy", "appearance", "notifications", "preferences", "beta"];
+    const validTabs = ["account", "privacy", "appearance", "preferences", "beta"];
     if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam as SettingsTab);
     }
@@ -303,7 +303,6 @@ function SettingsContent() {
     { id: "account", label: "Account", icon: "👤" },
     { id: "privacy", label: "Privacy & Safety", icon: "🛡️" },
     { id: "appearance", label: "Appearance", icon: "✨" },
-    { id: "notifications", label: "Notifications", icon: "🔔" },
     { id: "preferences", label: "Preferences", icon: "⚙️" },
     { id: "beta", label: "Beta", icon: "🧪" },
   ];
@@ -408,14 +407,6 @@ function SettingsContent() {
               setBetaFastAiGeneration={setBetaFastAiGeneration}
               setCustomAvatarUrl={setCustomAvatarUrl}
             />
-          )}
-
-          {activeTab === "notifications" && (
-            <div className="rounded-2xl border border-dashed border-border-theme bg-surface p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <span className="text-4xl mb-4 block">{tabs.find((t) => t.id === activeTab)?.icon}</span>
-              <h2 className="text-xl font-semibold text-foreground capitalize">{activeTab} Settings</h2>
-              <p className="mt-2 text-foreground/70">This section is currently under construction.</p>
-            </div>
           )}
         </section>
       </div>
